@@ -1,0 +1,116 @@
+classDiagram
+    class Utilisateur {
+        -int id
+        -String nom
+        -String email
+        -String motDePasse
+        -String telephone
+        +inscrire()
+        +seConnecter()
+        +modifierProfil()
+    }
+
+    class Organisateur {
+        -String societe
+        -String description
+        +creerEvenement()
+        +gererEvenement()
+        +contacterPrestataire()
+        +gererPropositionSponsoring()
+        +evaluerPrestataire()
+    }
+
+    class Evenement {
+        -int id
+        -String nom
+        -String description
+        -Date date
+        -String lieu
+        -double budget
+        -String statut
+        -double montantCollecte
+        +publier()
+        +modifierDetails()
+        +ajouterPrestataire()
+        +validerSponsoring()
+    }
+
+    class Gestionnaire {
+        -String role
+        +validerEvenement()
+        +gererPrestataires()
+        +gererCommissions()
+        +genererRapports()
+        +modererEvaluations()
+    }
+
+    class Sponsor {
+        -String societe
+        -double budgetDisponible
+        +rechercherEvenements()
+        +proposerSponsoring()
+        +consulterHistorique()
+        +evaluerEvenement()
+    }
+
+    class Prestataire {
+        -String type
+        -String portfolio
+        -double tarifHoraire
+        +gererProfil()
+        +repondreProposition()
+        +consulterHistorique()
+    }
+
+    class Participant {
+        +sInscrireEvenement()
+        +consulterEvenements()
+        +evaluerEvenement()
+    }
+
+    class Evaluation {
+        -int id
+        -int note
+        -String commentaire
+        -Date date
+        +creerEvaluation()
+        +modifierEvaluation()
+    }
+
+    class Sponsoring {
+        -int id
+        -double montant
+        -String statut
+        -Date dateProposition
+        +proposer()
+        +valider()
+        +refuser()
+    }
+
+    class Prestation {
+        -int id
+        -String type
+        -double tarif
+        -String statut
+        -Date dateDebut
+        -Date dateFin
+        +creerPrestation()
+        +modifierStatut()
+    }
+
+    Utilisateur <|-- Organisateur
+    Utilisateur <|-- Gestionnaire
+    Utilisateur <|-- Sponsor
+    Utilisateur <|-- Prestataire
+    Utilisateur <|-- Participant
+
+    Organisateur "1" -- "*" Evenement : gère
+    Evenement "1" -- "*" Sponsoring : reçoit
+    Evenement "1" -- "*" Prestation : inclut
+    Evenement "1" -- "*" Participant : participe
+    Evenement "1" -- "*" Evaluation : reçoit
+
+    Sponsor "1" -- "*" Sponsoring : propose
+    Prestataire "1" -- "*" Prestation : fournit
+    
+    Gestionnaire "1" -- "*" Evenement : valide
