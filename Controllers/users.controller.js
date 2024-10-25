@@ -1,7 +1,6 @@
 // Controllers/users.controller.js
 const User = require('../Models/users.model');
 const { Advisor } = require('../Models/advisor.model');
-
 // const jwt = require('jsonwebtoken');
 // const { AppError } = require('../utils/AppError');
 const bcrypt = require('bcryptjs');
@@ -18,28 +17,11 @@ const getAllUsers = async (req, res) => {
   }
 };
 
-// // Obtenir un utilisateur par ID
-// const getUserById = async (req, res) => {
-//   const id = req.params.id
-//   try {
-//       const user = await User.findById(id).select('-password');
-//       if (!user) {
-//           return res.status(404).json({ error: "Utilisateur non trouvé reso" });
-//       }
-//       res.json(user);
-//   } catch (err) {
-//       console.error(err.message);
-//       res.status(500).send("Erreur serveur");
-//   }
-// };
-
-
 const getUserById = async (req, res) => {
   const id = req.params.id;
   try {
     // Recherche d'abord dans le modèle User
     let user = await User.findById(id).select('-password');
-    
     // Si l'utilisateur n'est pas trouvé, recherche dans le modèle Advisor
     if (!user) {
       const advisor = await Advisor.findById(id);
@@ -48,7 +30,6 @@ const getUserById = async (req, res) => {
         user = await User.findById(advisor.user).select('-password');
       }
     }
-
     if (!user) {
       return res.status(404).json({ error: "Utilisateur non trouvé" });
     }
@@ -59,7 +40,6 @@ const getUserById = async (req, res) => {
     res.status(500).send("Erreur serveur");
   }
 };
-
 // Mettre à jour un utilisateur par ID
 const updateUser = async (req, res) => {
   const { name, email, password, role } = req.body;
@@ -101,7 +81,6 @@ const deleteUser = async (req, res) => {
       res.status(500).send("Erreur serveur");
   }
 };
-
 
 module.exports = {getAllUsers,getUserById,updateUser, deleteUser }
 

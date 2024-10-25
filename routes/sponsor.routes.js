@@ -1,15 +1,10 @@
 const express = require('express');
-const sponsorRouter = express.Router();
+const sponsorRuter = express.Router();
 const sponsorController = require('../Controllers/sponsor.controller');
 
-// Routes for handling sponsor operations
-sponsorRouter.post('/', sponsorController.addSponsor);
-sponsorRouter.delete('/:id', sponsorController.deleteSponsor);
-sponsorRouter.get('/:id', sponsorController.getSponsor);
-sponsorRouter.get('/', sponsorController.getAllSponsors);
+// Route pour la création d'un sponsor en attente
+sponsorRuter.post('/register', sponsorController.createPendingSponsor);
+// Route pour la confirmation de l'inscription du sponsor
+sponsorRuter.get('/confirm/:token', sponsorController.confirmSponsor);
 
-// New route for sponsor validation
-sponsorRouter.post('/validate/:token', sponsorController.confirmSponsor);
-
-module.exports = sponsorRouter;
-
+module.exports = sponsorRuter;
