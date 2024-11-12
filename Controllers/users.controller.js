@@ -1,87 +1,24 @@
-// Controllers/users.controller.js
-const User = require('../Models/users.model');
-const { Advisor } = require('../Models/advisor.model');
-// const jwt = require('jsonwebtoken');
-// const { AppError } = require('../utils/AppError');
-const bcrypt = require('bcryptjs');
-// const  catchAsync = require('../utils/catchAsync');
+const { User } = require('../Models/user.model');
+const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
 
-// Obtenir tous les utilisateurs
-const getAllUsers = async (req, res) => {
-  try {
-      const users = await User.find().select('-password');
-      res.json(users);
-  } catch (err) {
-      console.error(err.message);
-      res.status(500).send("Erreur serveur");
-  }
-};
+exports.login = async (req, res) => {
+  const { email, password } = req.body;
 
-const getUserById = async (req, res) => {
-  const id = req.params.id;
   try {
-    // Recherche d'abord dans le modèle User
-    let user = await User.findById(id).select('-password');
-    // Si l'utilisateur n'est pas trouvé, recherche dans le modèle Advisor
+    console.log("email : ", email)
+    const user = await User.findOne({ email });
     if (!user) {
-      const advisor = await Advisor.findById(id);
-      if (advisor) {
-        // Si un conseiller est trouvé, récupère l'utilisateur correspondant
-        user = await User.findById(advisor.user).select('-password');
-      }
-    }
-    if (!user) {
-      return res.status(404).json({ error: "Utilisateur non trouvé" });
+      return res.status(401).json({ error: 'Identifiants invalides incorrecte' });
     }
 
-    res.json(user);
-  } catch (err) {
-    console.error(err.message);
-    res.status(500).send("Erreur serveur");
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    console.log(isPasswordValid);
+    
+    const token = jwt.sign({ userId: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '1h' });
+    res.json({ token, user: { id: user._id, email: user.email, role: user.role } });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Erreur lors de la connexion' });
   }
 };
-// Mettre à jour un utilisateur par ID
-const updateUser = async (req, res) => {
-  const { name, email, password, role } = req.body;
-  const id = req.params.id
-
-  try {
-      let user = await User.findById(id);
-      if (!user) {
-          return res.status(404).json({ error: "Utilisateur non trouvé" });
-      }
-      // Mettre à jour les champs
-      user.name = name || user.name;
-      user.email = email || user.email;
-      user.role = role || user.role;
-      if (password) {
-              const salt = await bcrypt.genSalt(10);
-              user.password = await bcrypt.hash(password, salt);
-      }
-      await user.save();
-      res.json(user);
-  } catch (err) {
-      console.error(err.message);
-      res.status(500).send("Erreur serveur");
-  }
-};
-
-// Supprimer un utilisateur par ID
-const deleteUser = async (req, res) => {
-  try {
-      const user = await User.findById(req.params.id);
-      if (!user) {
-          return res.status(404).json({ error: "Utilisateur non trouvé" });
-      }
-
-      await User.deleteOne({ _id: req.params.id });
-      res.json({ message: "Utilisateur supprimé avec succès" });
-  } catch (err) {
-      console.error(err.message);
-      res.status(500).send("Erreur serveur");
-  }
-};
-
-module.exports = {getAllUsers,getUserById,updateUser, deleteUser }
-
-// Ajoutez d'autres fonctions de contrôleur selon vos besoins

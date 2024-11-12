@@ -45,31 +45,77 @@ exports.createPendingSponsor = async (req, res) => {
 // Confirmation d’inscription pour les sponsors et les utilisateurs
 exports.confirmSponsor = async (req, res) => {
   const { token } = req.params;
-
+  
   try {
-    // Vérification de l'utilisateur en attente
-    const pendingUser = await PendingUser.findOne({ validationToken: token, tokenExpiration: { $gt: Date.now() } });
-    if (!pendingUser) return res.status(400).json({ error: 'Token invalide ou expiré' });
+    // Ajout d'un verrou de validation avec findOneAndUpdate
+    const pendingUser = await PendingUser.findOneAndUpdate(
+      { 
+        validationToken: token, 
+        tokenExpiration: { $gt: Date.now() },
+        isValidating: { $ne: true } // Vérifie que le document n'est pas en cours de validation
+      },
+      { $set: { isValidating: true } },
+      { new: true }
+    );
 
-    // Création de l’utilisateur
-    const user = new User({ email: pendingUser.email, password: pendingUser.password });
+    if (!pendingUser) {
+      // Vérifie si l'utilisateur existe déjà
+      const existingUser = await User.findOne({ email: pendingUser?.email });
+      if (existingUser) {
+        return res.status(200).json({ 
+          success: true,
+          message: 'Compte déjà confirmé.' 
+        });
+      }
+      return res.status(400).json({ 
+        success: false,
+        error: 'Token invalide ou expiré' 
+      });
+    }
+
+    // Création de l'utilisateur
+    const user = new User({
+      email: pendingUser.email,
+      password: pendingUser.password
+    });
     await user.save();
 
     // Vérification du sponsor en attente
     const pendingSponsor = await PendingSponsor.findOne({ validationToken: token });
     if (pendingSponsor) {
-      const sponsor = new Sponsor({ user: user._id, company: pendingSponsor.company, language: pendingSponsor.language });
+      const sponsor = new Sponsor({
+        user: user._id,
+        company: pendingSponsor.company,
+        language: pendingSponsor.language
+      });
       await sponsor.save();
     }
 
     // Suppression des données temporaires
     await pendingUser.deleteOne();
-    if (pendingSponsor) await pendingSponsor.deleteOne();
+    if (pendingSponsor) {
+      await pendingSponsor.deleteOne();
+    }
 
-    res.status(200).json({ message: 'Inscription confirmée avec succès.' });
+    res.status(200).json({ 
+      success: true,
+      message: 'Inscription confirmée avec succès.' 
+    });
+
   } catch (error) {
-    console.error('Erreur Backend:', error); // Log d'erreur pour débogage
+    console.error('Erreur Backend:', error);
+    
+    // En cas d'erreur, on retire le verrou de validation
+    if (token) {
+      await PendingUser.findOneAndUpdate(
+        { validationToken: token },
+        { $set: { isValidating: false } }
+      ).catch(console.error);
+    }
 
-    res.status(500).json({ error: 'Erreur lors de la confirmation.' });
+    res.status(500).json({ 
+      success: false,
+      error: 'Erreur lors de la confirmation.' 
+    });
   }
 };

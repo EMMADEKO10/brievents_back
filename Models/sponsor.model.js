@@ -7,6 +7,7 @@ const PendingSponsorSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true },
   phone: { type: String, required: true },
   language: { type: String, required: true },
+  isValidating : { type: Boolean, required: true, default: false },
   validationToken: { type: String, required: true },
   tokenExpiration: { type: Date, required: true },
 }, { timestamps: true });

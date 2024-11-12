@@ -1,84 +1,24 @@
 const mongoose = require('mongoose');
 
-const AdvisorSchema = new mongoose.Schema({
-  user: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true
-  },
-    name: {
-        type: String,
-        required: true
-    },
-    email: {
-        type: String,
-        required: true,
-        unique: true
-    },
-    phone: {
-        type: String,
-        required: true
-    },
-    language: {
-        type: String,
-        required: true
-    }
-}, {
-    timestamps: true
-});
-
-
-const Advisor = mongoose.model('Advisor', AdvisorSchema);   
-
-// ---------------------------------------------------------------------------------------
-
-const PendingAdvisorSchema = new mongoose.Schema({
-  name: { 
-    type: String, 
-    required: true 
-  },
-  email: { 
-    type: String, 
-    required: true, 
-    unique: true 
-  },
-  phone: { 
-    type: String, 
-    required: true 
-  },
-  language: { 
-    type: String, 
-    required: true 
-  },
-//   user: {
-//     type: mongoose.Schema.Types.ObjectId,
-//     ref: 'User',
-//     required: true
-//   },
-  validationToken: {
-    type: String,
-    required: true
-  },
-  tokenExpiration: {
-    type: Date,
-    required: true
-  }
+const PendingOrganizerSchema = new mongoose.Schema({
+  name: { type: String, required: true },
+  lastName: { type: String, required: true },
+  company: { type: String, required: true },
+  email: { type: String, required: true, unique: true },
+  phone: { type: String, required: true },
+  language: { type: String, required: true },
+  isValidating : { type: Boolean, required: true, default: false },
+  validationToken: { type: String, required: true },
+  tokenExpiration: { type: Date, required: true },
 }, { timestamps: true });
 
-PendingAdvisor = mongoose.model('PendingAdvisor', PendingAdvisorSchema);
+const OrganizerSchema = new mongoose.Schema({
+  user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  company: { type: String, required: true },
+  language: { type: String, required: true },
+}, { timestamps: true });
 
-module.exports ={Advisor, PendingAdvisor};
+const PendingOrganizer = mongoose.model('PendingOrganizer', PendingOrganizerSchema);
+const Organizer = mongoose.model('Organizer', OrganizerSchema);
 
-
-
-
-
-
-
-
-
-
-
-
-
-
+module.exports = { Organizer, PendingOrganizer };

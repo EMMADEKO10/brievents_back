@@ -7,13 +7,14 @@ const path = require('path');
 const http = require('http');
 const corsOptions = require("./configs/corsOptions");
 
+
 // Routes
-// const authRouter = require('./routes/auth.routes');
-// const userRouter = require('./routes/users.routes');
-// const eventRouter = require('./routes/events.routes');
-// const companyRouter = require('./routes/company.routes');
-const sponsorRuter = require('./routes/sponsor.routes');
-// const actualiteRouter = require('./routes/actualite.routes');
+const sponsorRouter = require('./routes/sponsor.routes');
+const prestataireRouter = require('./routes/prestataire.routes');
+const eventRouter = require("./routes/event.routes")
+const organizerRouter = require("./routes/organizer.routes")
+const userRouter = require("./routes/users.routes")
+// ---------------------------
 const app = express();
 const server = http.createServer(app);
 
@@ -28,22 +29,17 @@ app.use('/images', express.static(path.join(__dirname, 'public', 'Images')));
 // Ajouter cette ligne après les autres app.use() pour les fichiers statiques
 
 // Routes
-// app.use('/api/auth', authRouter);
-// app.use('/api/user', userRouter);
-// app.use('/api/company', companyRouter);
-app.use('/api/sponsor', sponsorRuter);
-// app.use('/api/event', eventRouter);
-// app.use('/api/actualites', actualiteRouter);
+
+app.use('/api/sponsor', sponsorRouter);
+app.use('/api/organizer', organizerRouter);
+app.use('/api/event', eventRouter);
+app.use('/api/login', userRouter);
+app.use('/api/prestataire', prestataireRouter);
 
 // Route racine
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'views', 'index.html'));
 });
-
-// Gestion des erreurs 404
-// app.use((req, res, next) => {
-//   res.status(404).sendFile(path.join(__dirname, 'views', '404.html'));
-// });
 
 // Middleware de gestion des erreurs
 app.use((err, req, res, next) => {
