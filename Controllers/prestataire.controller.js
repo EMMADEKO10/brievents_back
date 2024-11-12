@@ -137,7 +137,8 @@ exports.confirmPrestataire = async (req, res) => {
     const user = new User({
       email: pendingUser.email,
       password: pendingUser.password,
-      role: 'prestataire'
+      role: 'prestataire',
+      name: pendingPrestataire.name
     });
     await user.save();
 

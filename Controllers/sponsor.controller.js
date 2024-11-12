@@ -76,7 +76,8 @@ exports.confirmSponsor = async (req, res) => {
     // Création de l'utilisateur
     const user = new User({
       email: pendingUser.email,
-      password: pendingUser.password
+      password: pendingUser.password,
+      name: pendingSponsor.name
     });
     await user.save();
 

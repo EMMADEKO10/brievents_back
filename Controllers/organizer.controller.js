@@ -41,7 +41,6 @@ exports.createPendingOrganizer = async (req, res) => {
   }
 };
 
-
 // Confirmation d’inscription pour les Organizers et les utilisateurs
 exports.confirmOrganizer = async (req, res) => {
     const { token } = req.params;
@@ -73,10 +72,15 @@ exports.confirmOrganizer = async (req, res) => {
         });
       }
       console.log(pendingUser);
+
       // Création de l'utilisateur avec le rôle organizer
+      const organizerName = await PendingOrganizer.findOne({ validationToken: token });
+      console.log("voici organizerName",organizerName);
+      console.log("voici organizerName.name",organizerName.name);
       const user = new User({
         email: pendingUser.email,
         password: pendingUser.password,
+        name: organizerName.name,
         role: 'organizer'  // Modification ici pour définir le rôle
       });
       await user.save();

@@ -14,9 +14,10 @@ exports.login = async (req, res) => {
 
     const isPasswordValid = await bcrypt.compare(password, user.password);
     console.log(isPasswordValid);
+    console.log("isPasswordValid", user.name);
     
     const token = jwt.sign({ userId: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '1h' });
-    res.json({ token, user: { id: user._id, email: user.email, role: user.role } });
+    res.json({ token, user: { id: user._id, email: user.email, role: user.role, name: user.name } });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Erreur lors de la connexion' });
