@@ -7,13 +7,13 @@ const path = require('path');
 const http = require('http');
 const corsOptions = require("./configs/corsOptions");
 
-
 // Routes
 const sponsorRouter = require('./routes/sponsor.routes');
 const prestataireRouter = require('./routes/prestataire.routes');
 const eventRouter = require("./routes/event.routes")
 const organizerRouter = require("./routes/organizer.routes")
 const userRouter = require("./routes/users.routes")
+const parrainageRouter = require("./routes/parrainage.routes")
 // ---------------------------
 const app = express();
 const server = http.createServer(app);
@@ -35,6 +35,7 @@ app.use('/api/organizer', organizerRouter);
 app.use('/api/event', eventRouter);
 app.use('/api/login', userRouter);
 app.use('/api/prestataire', prestataireRouter);
+app.use('/api/parrainage', parrainageRouter);
 
 // Route racine
 app.get('/', (req, res) => {
