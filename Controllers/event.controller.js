@@ -1,6 +1,7 @@
 const Event = require('../Models/event.model');
 const { cloudinary, getUploadFolder } = require('../cloudinary');
-
+const User = require('../Models/user.model');
+const Organizer = require('../Models/organizer.model');
 
 exports.getAllEventsClient = async (req, res) => {
   try {
@@ -17,7 +18,7 @@ exports.createEvent = async (req, res) => {
     // if (!req.body.eventData) {
     //   return res.status(400).json({ message: 'Les données de l\'événement sont requises' });
     // }
-console.log(req.body.eventData);
+    console.log(req.body.eventData);
     let eventData;
     try {
       eventData = JSON.parse(req.body.eventData);
@@ -69,7 +70,6 @@ console.log(req.body.eventData);
   }
 };
 
-
 exports.updateEvent = async (req, res) => {
   try {
     const eventData = JSON.parse(req.body.eventData);
@@ -98,6 +98,7 @@ exports.updateEvent = async (req, res) => {
     res.status(400).json({ message: error.message });
   }
 };
+
 // Obtenir les événements par type
 exports.getEventsByType = async (req, res) => {
     try {
@@ -218,6 +219,34 @@ exports.getEventsByType = async (req, res) => {
         totalPages: Math.ceil(total / limit),
         totalEvents: total
       });
+    } catch (error) {
+      res.status(500).json({ message: error.message });
+    }
+  };
+
+  // Obtenir un événement par id
+  exports.getEventById = async (req, res) => {
+    try {
+      const event = await Event.findById(req.params.id).populate('createdBy', 'name email');
+      if (!event) {
+        return res.status(404).json({ message: 'Événement non trouvé' });
+      }
+      res.json(event);
+    } catch (error) {
+      res.status(500).json({ message: error.message });
+    }
+  };
+  
+  // Obtenir les informations de l'utilisateur et de l'organisateur qui a créé l'événement
+  exports.getEventCreatorInfo = async (req, res) => {
+    try {
+      const event = await Event.findById(req.params.id).populate('createdBy', 'name email').populate('organizer', 'name email');
+      if (!event) {
+        return res.status(404).json({ message: 'Événement non trouvé' });
+      }
+      const userInfo = event.createdBy;
+      const organizerInfo = event.organizer;
+      res.json({ userInfo, organizerInfo });
     } catch (error) {
       res.status(500).json({ message: error.message });
     }

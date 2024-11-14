@@ -15,6 +15,7 @@ exports.createPendingSponsor = async (req, res) => {
     // Création de l'utilisateur en attente
     const pendingUser = new PendingUser({ email, password, validationToken, tokenExpiration });
     await pendingUser.save();
+    console.log('Utilisateur en attente créé avec succès');
 
     // Création du sponsor en attente lié à l'utilisateur
     const pendingSponsor = new PendingSponsor({
@@ -22,6 +23,7 @@ exports.createPendingSponsor = async (req, res) => {
       validationToken, tokenExpiration
     });
     await pendingSponsor.save();
+    console.log('Sponsor en attente créé avec succès');
 
     // Lien de confirmation
     const confirmationUrl = `${process.env.FRONTEND_URL}/confirm/${validationToken}`;
@@ -33,6 +35,7 @@ exports.createPendingSponsor = async (req, res) => {
       `Merci de vous inscrire. Cliquez sur le lien pour confirmer : ${confirmationUrl}`,
       `<p>Merci de vous inscrire. Cliquez sur le lien pour confirmer : <a href="${confirmationUrl}">Confirmer l'inscription</a></p>`
     );
+    console.log('Email de confirmation envoyé avec succès');
 
     res.status(201).json({ message: 'Inscription en attente, veuillez vérifier votre email.' });
   } catch (error) {
@@ -72,6 +75,7 @@ exports.confirmSponsor = async (req, res) => {
         error: 'Token invalide ou expiré' 
       });
     }
+    const pendingSponsor = await PendingSponsor.findOne({ validationToken: token });
 
     // Création de l'utilisateur
     const user = new User({
@@ -80,9 +84,9 @@ exports.confirmSponsor = async (req, res) => {
       name: pendingSponsor.name
     });
     await user.save();
+    console.log('Utilisateur créé avec succès');
 
     // Vérification du sponsor en attente
-    const pendingSponsor = await PendingSponsor.findOne({ validationToken: token });
     if (pendingSponsor) {
       const sponsor = new Sponsor({
         user: user._id,
@@ -90,13 +94,16 @@ exports.confirmSponsor = async (req, res) => {
         language: pendingSponsor.language
       });
       await sponsor.save();
+      console.log('Sponsor créé avec succès');
     }
 
     // Suppression des données temporaires
     await pendingUser.deleteOne();
     if (pendingSponsor) {
       await pendingSponsor.deleteOne();
+    console.log('Données pendingSponsor temporaires supprimées avec succès');
     }
+    console.log('Données pendingUser temporaires supprimées avec succès');
 
     res.status(200).json({ 
       success: true,

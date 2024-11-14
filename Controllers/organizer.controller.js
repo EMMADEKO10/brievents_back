@@ -74,19 +74,19 @@ exports.confirmOrganizer = async (req, res) => {
       console.log(pendingUser);
 
       // Création de l'utilisateur avec le rôle organizer
-      const organizerName = await PendingOrganizer.findOne({ validationToken: token });
+      const pendingOrganizer = await PendingOrganizer.findOne({ validationToken: token });
+
       console.log("voici organizerName",organizerName);
       console.log("voici organizerName.name",organizerName.name);
       const user = new User({
         email: pendingUser.email,
         password: pendingUser.password,
-        name: organizerName.name,
+        name: pendingOrganizer.name,
         role: 'organizer'  // Modification ici pour définir le rôle
       });
       await user.save();
   
       // Vérification du Organizer en attente
-      const pendingOrganizer = await PendingOrganizer.findOne({ validationToken: token });
       if (pendingOrganizer) {
         const organizer = new Organizer({
           user: user._id,

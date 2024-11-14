@@ -79,7 +79,6 @@ const addParrainage = async (req, res) => {
       console.log(`is à jour:`, user.name);
         const values =  newParrainage.amount;
       console.log(`Nouv mis à jour:`, values);
-
         // Créer une notification de crédit à l'utilisateur créé ou mis à jour
         // Utiliser le nom de l'utilisateur pour la création de la notification
       const message = `Demande de crédit pour un montant de €${values}`

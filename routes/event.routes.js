@@ -4,7 +4,7 @@ const eventRouter = express.Router();
 const eventController = require('../Controllers/event.controller');
 const upload = require('../configs/multer.config');
  const authorize = require('../Middlewares/auth.middleware'); // Assurez-vous d'avoir un middleware d'authentification
-
+ 
 // Route pour créer un événement
 // Le middleware upload.single('logo') s'attend à recevoir un fichier avec le nom 'logo'
 eventRouter.post('/add', 
@@ -13,6 +13,7 @@ eventRouter.post('/add',
   eventController.createEvent
 );
 eventRouter.get('/', eventController.getAllEventsClient);
+eventRouter.get('/:id', eventController.getEventById);
 
 module.exports = eventRouter;
 
