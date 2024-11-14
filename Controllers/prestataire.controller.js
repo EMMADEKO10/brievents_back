@@ -104,8 +104,7 @@ exports.createPendingPrestataire = async (req, res) => {
 
 exports.confirmPrestataire = async (req, res) => {
   const { token } = req.params;
-  
-  try {
+   try {
     // Vérifier et verrouiller l'utilisateur en attente
     const pendingUser = await PendingUser.findOneAndUpdate(
       { 
