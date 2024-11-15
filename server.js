@@ -14,6 +14,7 @@ const eventRouter = require("./routes/event.routes")
 const organizerRouter = require("./routes/organizer.routes")
 const userRouter = require("./routes/users.routes")
 const parrainageRouter = require("./routes/parrainage.routes")
+const notationRouter = require("./routes/notationPrestataire.routes")
 // ---------------------------
 const app = express();
 const server = http.createServer(app);
@@ -36,7 +37,7 @@ app.use('/api/event', eventRouter);
 app.use('/api/login', userRouter);
 app.use('/api/prestataire', prestataireRouter);
 app.use('/api/parrainage', parrainageRouter);
-
+app.use('/api/notation', notationRouter);
 // Route racine
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'views', 'index.html'));

@@ -36,10 +36,66 @@ const PrestataireSchema = new mongoose.Schema({
   phone: { type: String, required: true },
   newsletter: { type: Boolean, default: false },
   language: { type: String, required: true },
-  isActive: { type: Boolean, default: true }
+  isActive: { type: Boolean, default: true },
+ // Ajout des statistiques de notation
+  ratings: {
+  averageScore: { type: Number, default: 0 },
+  totalRatings: { type: Number, default: 0 },
+  criteriaAverages: {
+    professionnalisme: { type: Number, default: 0 },
+    communication: { type: Number, default: 0 },
+    qualiteService: { type: Number, default: 0 },
+    rapportQualitePrix: { type: Number, default: 0 }
+  }
+}
+  
 }, { timestamps: true });
 
 const PendingPrestataire = mongoose.model('PendingPrestataire', PendingPrestataireSchema);
 const Prestataire = mongoose.model('Prestataire', PrestataireSchema);
 
-module.exports = { PendingPrestataire, Prestataire };
+
+
+// Schéma pour une note individuelle
+const RatingSchema = new mongoose.Schema({
+  organizer: { 
+    type: mongoose.Schema.Types.ObjectId, 
+    ref: 'User', 
+    required: true 
+  },
+  prestataire: { 
+    type: mongoose.Schema.Types.ObjectId, 
+    ref: 'Prestataire', 
+    required: true 
+  },
+  event: { 
+    type: mongoose.Schema.Types.ObjectId, 
+    ref: 'Event', 
+    required: true 
+  },
+  score: { 
+    type: Number, 
+    required: true,
+    min: 0,
+    max: 5
+  },
+  comment: { 
+    type: String,
+    maxLength: 500
+  },
+  criteria: {
+    professionnalisme: { type: Number, required: true, min: 0, max: 5 },
+    communication: { type: Number, required: true, min: 0, max: 5 },
+    qualiteService: { type: Number, required: true, min: 0, max: 5 },
+    rapportQualitePrix: { type: Number, required: true, min: 0, max: 5 }
+  }
+}, { 
+  timestamps: true 
+});
+
+// Index unique pour empêcher les doublons de notation
+RatingSchema.index({ organizer: 1, prestataire: 1, event: 1 }, { unique: true });
+
+const Rating = mongoose.model('Rating', RatingSchema);
+
+module.exports = { PendingPrestataire, Prestataire, Rating };
