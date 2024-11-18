@@ -7,4 +7,9 @@ prestataireRouter.post('/register', prestataireController.createPendingPrestatai
 // Route pour la confirmation de l'inscription du prestataire
 prestataireRouter.get('/confirm/:token', prestataireController.confirmPrestataire);
 
+// Route pour obtenir tous les prestataires
+prestataireRouter.get('/', prestataireController.getAllPrestataires);
+// Route pour obtenir un prestataire par ID
+prestataireRouter.get('/:id', prestataireController.getPrestataireById);
+
 module.exports = prestataireRouter;

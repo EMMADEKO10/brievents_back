@@ -2,6 +2,7 @@ const Event = require('../Models/event.model');
 const { cloudinary, getUploadFolder } = require('../cloudinary');
 const User = require('../Models/user.model');
 const Organizer = require('../Models/organizer.model');
+const { Prestataire } = require('../Models/prestataire.model');
 
 exports.getAllEventsClient = async (req, res) => {
   try {
@@ -96,6 +97,71 @@ exports.updateEvent = async (req, res) => {
     res.json(updatedEvent);
   } catch (error) {
     res.status(400).json({ message: error.message });
+  }
+};
+
+// Ajouter un prestataire à l'événement
+// Définition du contrôleur
+const addPrestataireToEvent = async (req, res) => {
+  try {
+    const { id, prestataireId } = req.params;
+    console.log('ID événement:', id);
+    console.log('ID prestataire:', prestataireId);
+
+    // Votre logique pour ajouter le prestataire
+    // Par exemple :
+    const event = await Event.findById(id);
+    if (!event) {
+      return res.status(404).json({ message: "Événement non trouvé" });
+    }
+
+    const prestataire = await Prestataire.findById(prestataireId);
+    if (!prestataire) {
+      return res.status(404).json({ message: "Prestataire non trouvé" });
+    }
+
+    // Ajouter le prestataire s'il n'existe pas déjà
+    if (!event.prestataires.includes(prestataireId)) {
+      event.prestataires.push(prestataireId);
+      await event.save();
+    }
+
+    res.status(200).json({ message: "Prestataire ajouté avec succès", event });
+  } catch (error) {
+    console.error('Erreur dans addPrestataireToEvent:', error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Retirer un prestataire de l'événement
+exports.removePrestataireFromEvent = async (req, res) => {
+  try {
+    const { eventId, prestataireId } = req.params;
+
+    // Vérifier si l'événement existe
+    const event = await Event.findById(eventId);
+    if (!event) {
+      return res.status(404).json({ message: 'Événement non trouvé' });
+    }
+
+    // Vérifier si le prestataire est bien dans l'événement
+    if (!event.prestataires || !event.prestataires.includes(prestataireId)) {
+      return res.status(400).json({ message: 'Ce prestataire n\'est pas dans l\'événement' });
+    }
+
+    // Retirer le prestataire de l'événement
+    event.prestataires = event.prestataires.filter(
+      id => id.toString() !== prestataireId
+    );
+    await event.save();
+
+    res.status(200).json({
+      message: 'Prestataire retiré avec succès de l\'événement',
+      event
+    });
+
+  } catch (error) {
+    res.status(500).json({ message: error.message });
   }
 };
 

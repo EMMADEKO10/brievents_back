@@ -8,6 +8,9 @@ const {
   getEventById,
   updateEvent,
   deleteEvent,
+  addPrestataireToEvent,
+  removePrestataireFromEvent,
+  getEventsByType
 } = require('../Controllers/events.controller');
 // const authMiddleware = require('../middleware/authMiddleware');
 // const adminMiddleware = require('../middleware/adminMiddleware');
@@ -26,5 +29,18 @@ eventRouter.put('/:id',  updateEvent);
 
 // Route pour supprimer un événement par ID
 eventRouter.delete('/:id',  deleteEvent);
+
+// Route pour ajouter un prestataire à un événement
+// Dans votre fichier de routes
+eventRouter.post('/:id/prestataires/:prestataireId', (req, res, next) => {
+  console.log('Route appelée avec params:', req.params);
+  addPrestataireToEvent(req, res, next);
+});
+
+// Route pour retirer un prestataire d'un événement
+eventRouter.delete('/:id/prestataires/:prestataireId', removePrestataireFromEvent);
+
+// Route pour obtenir les événements par type
+eventRouter.get('/type/:eventType', getEventsByType);
 
 module.exports = eventRouter;

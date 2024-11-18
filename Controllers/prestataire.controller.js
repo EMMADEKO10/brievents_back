@@ -28,8 +28,8 @@ exports.createPendingPrestataire = async (req, res) => {
 
   try {
     // Vérifier si l'email existe déjà
-    const existingUser = await User.findOne({ email });
-    const existingPendingUser = await PendingUser.findOne({ email });
+    const existingUser = await User.findOne({ email }).maxTimeMS(5000); // Ajout timeout
+    const existingPendingUser = await PendingUser.findOne({ email }).maxTimeMS(5000);
     
     if (existingUser || existingPendingUser) {
       return res.status(400).json({ error: 'Cet email est déjà utilisé' });
@@ -104,7 +104,7 @@ exports.createPendingPrestataire = async (req, res) => {
 
 exports.confirmPrestataire = async (req, res) => {
   const { token } = req.params;
-   try {
+  try {
     // Vérifier et verrouiller l'utilisateur en attente
     const pendingUser = await PendingUser.findOneAndUpdate(
       { 
@@ -114,7 +114,7 @@ exports.confirmPrestataire = async (req, res) => {
       },
       { $set: { isValidating: true } },
       { new: true }
-    );
+    ).maxTimeMS(5000);
 
     if (!pendingUser) {
       return res.status(400).json({ 
@@ -124,7 +124,7 @@ exports.confirmPrestataire = async (req, res) => {
     }
 
     // Récupérer les informations du prestataire en attente
-    const pendingPrestataire = await PendingPrestataire.findOne({ validationToken: token });
+    const pendingPrestataire = await PendingPrestataire.findOne({ validationToken: token }).maxTimeMS(5000);
     if (!pendingPrestataire) {
       return res.status(400).json({ 
         success: false,
@@ -190,12 +190,62 @@ exports.confirmPrestataire = async (req, res) => {
       await PendingUser.findOneAndUpdate(
         { validationToken: token },
         { $set: { isValidating: false } }
-      ).catch(console.error);
+      ).maxTimeMS(5000).catch(console.error);
     }
 
     res.status(500).json({ 
       success: false,
       error: 'Une erreur est survenue lors de la confirmation du compte.' 
+    });
+  }
+};
+
+// Obtenir tous les prestataires
+exports.getAllPrestataires = async (req, res) => {
+  try {
+    const prestataires = await Prestataire.find({ isActive: true })
+      .populate('user', 'email')
+      .select('-__v')
+      .maxTimeMS(5000); // Ajout d'un timeout de 5 secondes
+
+    res.status(200).json({
+      success: true,
+      data: prestataires
+    });
+  } catch (error) {
+    console.error('Erreur Backend:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Erreur lors de la récupération des prestataires'
+    });
+  }
+};
+
+// Obtenir un prestataire par ID
+exports.getPrestataireById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const prestataire = await Prestataire.findById(id)
+      .populate('user', 'email')
+      .select('-__v')
+      .maxTimeMS(5000); // Ajout d'un timeout de 5 secondes
+
+    if (!prestataire) {
+      return res.status(404).json({
+        success: false,
+        error: 'Prestataire non trouvé'
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      data: prestataire
+    });
+  } catch (error) {
+    console.error('Erreur Backend:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Erreur lors de la récupération du prestataire'
     });
   }
 };

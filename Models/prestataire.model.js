@@ -48,9 +48,7 @@ const PrestataireSchema = new mongoose.Schema({
     rapportQualitePrix: { type: Number, default: 0 }
   }
 }
-  
-}, { timestamps: true });
-
+ }, { timestamps: true });
 const PendingPrestataire = mongoose.model('PendingPrestataire', PendingPrestataireSchema);
 const Prestataire = mongoose.model('Prestataire', PrestataireSchema);
 
@@ -92,7 +90,6 @@ const RatingSchema = new mongoose.Schema({
 }, { 
   timestamps: true 
 });
-
 // Index unique pour empêcher les doublons de notation
 RatingSchema.index({ organizer: 1, prestataire: 1, event: 1 }, { unique: true });
 

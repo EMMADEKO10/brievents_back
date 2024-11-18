@@ -43,6 +43,12 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'views', 'index.html'));
 });
 
+// Ajoutez un middleware pour logger toutes les requêtes
+app.use((req, res, next) => {
+  console.log(`${req.method} ${req.url}`);
+  next();
+});
+
 // Middleware de gestion des erreurs
 app.use((err, req, res, next) => {
   console.error(err.stack);
