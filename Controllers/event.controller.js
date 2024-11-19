@@ -13,6 +13,29 @@ exports.getAllEventsClient = async (req, res) => {
   }
 };
 
+// Obtenir tous les événements valides d'un utilisateur
+exports.getUserValidEvents = async (req, res) => {
+  try {
+    const userId = req.params.userId;
+    
+    const events = await Event.find({
+      createdBy: userId,
+      status: 'Publié' // Ne retourne que les événements publiés/valides
+    }).populate('createdBy', 'name email');
+
+    if (!events) {
+      return res.status(404).json({ message: 'Aucun événement trouvé pour cet utilisateur' });
+    }
+
+    res.status(200).json(events);
+  } catch (error) {
+    res.status(500).json({ 
+      message: 'Erreur lors de la récupération des événements',
+      error: error.message 
+    });
+  }
+};
+
 exports.createEvent = async (req, res) => {
   try {
     // Vérifier si eventData est présent et valide
@@ -102,11 +125,11 @@ exports.updateEvent = async (req, res) => {
 
 // Ajouter un prestataire à l'événement
 // Définition du contrôleur
-const addPrestataireToEvent = async (req, res) => {
+exports.addPrestataireToEvent = async (req, res) => {
   try {
     const { id, prestataireId } = req.params;
-    console.log('ID événement:', id);
-    console.log('ID prestataire:', prestataireId);
+    // console.log('ID événement:', id);
+    // console.log('ID prestataire:', prestataireId);
 
     // Votre logique pour ajouter le prestataire
     // Par exemple :
@@ -136,10 +159,12 @@ const addPrestataireToEvent = async (req, res) => {
 // Retirer un prestataire de l'événement
 exports.removePrestataireFromEvent = async (req, res) => {
   try {
-    const { eventId, prestataireId } = req.params;
+    const { id, prestataireId } = req.params;
+    console.log('ID événement:', id);
+    console.log('ID prestataire:', prestataireId);
 
     // Vérifier si l'événement existe
-    const event = await Event.findById(eventId);
+    const event = await Event.findById(id);
     if (!event) {
       return res.status(404).json({ message: 'Événement non trouvé' });
     }

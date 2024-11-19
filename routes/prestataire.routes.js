@@ -11,5 +11,9 @@ prestataireRouter.get('/confirm/:token', prestataireController.confirmPrestatair
 prestataireRouter.get('/', prestataireController.getAllPrestataires);
 // Route pour obtenir un prestataire par ID
 prestataireRouter.get('/:id', prestataireController.getPrestataireById);
+// Route pour obtenir l'historique des contacts d'un prestataire
+prestataireRouter.get('/:id/contacts', prestataireController.getPrestataireContacts);
+// Route pour ajouter une évaluation pour un prestataire
+prestataireRouter.post('/:id/ratings', prestataireController.addRating);
 
 module.exports = prestataireRouter;

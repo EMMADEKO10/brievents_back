@@ -14,6 +14,12 @@ eventRouter.post('/add',
 );
 eventRouter.get('/', eventController.getAllEventsClient);
 eventRouter.get('/:id', eventController.getEventById);
+eventRouter.post('/:id/prestataires/:prestataireId', eventController.addPrestataireToEvent);
+eventRouter.delete('/:id/prestataires/:prestataireId', eventController.removePrestataireFromEvent);
+// Route pour obtenir les événements par type
+eventRouter.get('/type/:eventType', eventController.getEventsByType);
+eventRouter.get('/user/:userId', eventController.getUserValidEvents);
+
 
 module.exports = eventRouter;
 

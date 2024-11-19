@@ -21,6 +21,19 @@ const PendingPrestataireSchema = new mongoose.Schema({
   tokenExpiration: { type: Date, required: true }
 }, { timestamps: true });
 
+const ContactHistorySchema = new mongoose.Schema({
+  _id: { type: String },
+  organizer: {
+    _id: { type: String },
+    company: { type: String },
+    contactDate: { type: String }
+  },
+  rating: {
+    score: { type: Number },
+    comment: { type: String }
+  }
+});
+
 const PrestataireSchema = new mongoose.Schema({
   user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   name: { type: String, required: true },
@@ -37,22 +50,21 @@ const PrestataireSchema = new mongoose.Schema({
   newsletter: { type: Boolean, default: false },
   language: { type: String, required: true },
   isActive: { type: Boolean, default: true },
- // Ajout des statistiques de notation
   ratings: {
-  averageScore: { type: Number, default: 0 },
-  totalRatings: { type: Number, default: 0 },
-  criteriaAverages: {
-    professionnalisme: { type: Number, default: 0 },
-    communication: { type: Number, default: 0 },
-    qualiteService: { type: Number, default: 0 },
-    rapportQualitePrix: { type: Number, default: 0 }
-  }
-}
- }, { timestamps: true });
+    averageScore: { type: Number, default: 0 },
+    totalRatings: { type: Number, default: 0 },
+    criteriaAverages: {
+      professionnalisme: { type: Number, default: 0 },
+      communication: { type: Number, default: 0 },
+      qualiteService: { type: Number, default: 0 },
+      rapportQualitePrix: { type: Number, default: 0 }
+    }
+  },
+  contactHistory: [ContactHistorySchema]
+}, { timestamps: true });
+
 const PendingPrestataire = mongoose.model('PendingPrestataire', PendingPrestataireSchema);
 const Prestataire = mongoose.model('Prestataire', PrestataireSchema);
-
-
 
 // Schéma pour une note individuelle
 const RatingSchema = new mongoose.Schema({
