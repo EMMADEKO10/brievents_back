@@ -283,10 +283,9 @@ exports.getPrestataireContacts = async (req, res) => {
 exports.addRating = async (req, res) => {
   try {
     console.log('Début de la fonction addRating');
-    // const { prestataire: prestataireId } = req.params;
     const prestataireId = req.params.id;
-    const { organizer, event, score, comment, criteria } = req.body;
-    console.log('Données reçues:', { prestataireId, organizer, event, score, comment, criteria });
+    const { organizer, event, score, comment, criteria, nameOrganizer } = req.body;
+    console.log('Données reçues:', { prestataireId, organizer, event, score, comment, criteria, nameOrganizer });
 
     // Validation des données requises
     if (!prestataireId || !organizer || !event || !score || !criteria) {
@@ -341,11 +340,25 @@ exports.addRating = async (req, res) => {
 
     // Mettre à jour le prestataire avec les nouvelles moyennes
     await Prestataire.findByIdAndUpdate(prestataireId, {
+      $push: {
+        contactHistory: {
+          _id: event, // Utiliser l'ID de l'événement comme identifiant unique
+          organizer: {
+            _id: organizer,
+            company: nameOrganizer || '',
+            contactDate: new Date().toISOString()
+          },
+          rating: {
+            score: score,
+            comment: comment || ''
+          }
+        }
+      },
       'ratings.averageScore': averageScore,
       'ratings.totalRatings': totalRatings,
       'ratings.criteriaAverages': criteriaAverages
     });
-    console.log('Prestataire mis à jour avec les nouvelles moyennes');
+    console.log('Prestataire mis à jour avec les nouvelles moyennes et l\'historique des contacts');
 
     res.status(201).json({
       success: true,
