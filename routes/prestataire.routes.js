@@ -24,5 +24,7 @@ prestataireRouter.get('/:id/stats', prestataireStatController.getPrestataireStat
 
 // Route pour obtenir les informations complètes d'un prestataire
 prestataireRouter.get('/:id/full-info', prestataireStatController.getPrestataireFullInfo);
+// Route pour obtenir les événements à venir d'un prestataire
+prestataireRouter.get('/:id/upcoming-events', prestataireStatController.getPrestataireUpcomingEvents);
 
 module.exports = prestataireRouter;

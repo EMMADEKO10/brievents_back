@@ -17,7 +17,7 @@ exports.getPrestataireEvents = async (req, res) => {
 
         // Vérifier si le prestataire existe
         const prestataire = await Prestataire.findById(prestataireSeach._id).maxTimeMS(5000);
-        console.log('Données du prestataire:', prestataire);
+        // console.log('Données du prestataire:', prestataire);
 
         if (!prestataire) {
           return res.status(404).json({
@@ -34,7 +34,7 @@ exports.getPrestataireEvents = async (req, res) => {
         // .select('name startDate endDate location')
         .maxTimeMS(5000);
     
-        console.log('Événements trouvés:', events);
+        // console.log('Événements trouvés:', events);
 
         res.status(200).json({
           success: true,
@@ -115,7 +115,7 @@ exports.getPrestataireStats = async (req, res) => {
           }
         };
 
-        console.log('Statistiques calculées:', stats);
+        // console.log('Statistiques calculées:', stats);
     
         res.status(200).json({
           success: true,
@@ -193,7 +193,7 @@ exports.getPrestataireFullInfo = async (req, res) => {
           contactHistory: prestataire.contactHistory
         };
 
-        console.log('Informations complètes du prestataire:', prestataireFullInfo);
+        // console.log('Informations complètes du prestataire:', prestataireFullInfo);
 
         res.status(200).json({
           success: true,
@@ -205,6 +205,59 @@ exports.getPrestataireFullInfo = async (req, res) => {
         res.status(500).json({
           success: false,
           error: 'Erreur lors de la récupération des informations du prestataire'
+        });
+    }
+};
+
+// Obtenir les événements à venir d'un prestataire
+exports.getPrestataireUpcomingEvents = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const currentDate = new Date();
+        
+        console.log('ID reçu:', id);
+        console.log('Date actuelle:', currentDate);
+        
+        const prestataireSeach = await Prestataire.findOne({ user: id });
+        console.log('Résultat recherche prestataire par user ID:', prestataireSeach);
+        
+        // Vérifier si le prestataire existe
+        const prestataire = await Prestataire.findById(prestataireSeach._id).maxTimeMS(5000);
+        console.log('Prestataire trouvé:', prestataire ? 'Oui' : 'Non');
+        
+        if (!prestataire) {
+            console.log('Prestataire non trouvé pour l\'ID:', id);
+            return res.status(404).json({
+                success: false,
+                error: 'Prestataire non trouvé'
+            });
+        }
+        
+        console.log('ID du prestataire pour la recherche d\'événements:', prestataire._id);
+        
+        // Rechercher les événements à venir
+        const upcomingEvents = await Event.find({ 
+            prestataires: prestataire._id,
+            // startDate: { $gt: currentDate },
+            // status: { $ne: 'Annulé' }  // Exclure les événements annulés
+        })
+        .sort({ startDate: 1 })  // Trier par date croissante
+        .maxTimeMS(5000);
+        
+        console.log('Nombre d\'événements trouvés:', upcomingEvents.length);
+        console.log('Événements à venir:', upcomingEvents);
+        
+        res.status(200).json({
+            success: true,
+            data: upcomingEvents
+        });
+        
+    } catch (error) {
+        console.error('Erreur Backend:', error);
+        console.error('Détails de l\'erreur:', error.message);
+        res.status(500).json({
+            success: false,
+            error: 'Erreur lors de la récupération des événements à venir'
         });
     }
 };
