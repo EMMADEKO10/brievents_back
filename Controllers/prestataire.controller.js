@@ -4,7 +4,7 @@ const { PendingPrestataire, Prestataire } = require('../Models/prestataire.model
 const { PendingUser, User } = require('../Models/user.model');
 const { sendEmail } = require('../configs/sendEmails');
 const {Rating} = require('../Models/prestataire.model');
-const { Project } = require('../Models/project.model');
+
 
 // Création d'un prestataire en attente
 exports.createPendingPrestataire = async (req, res) => {
@@ -375,106 +375,3 @@ exports.addRating = async (req, res) => {
   }
 };
 
-// Obtenir tous les projets d'un prestataire
-exports.getPrestataireProjects = async (req, res) => {
-  try {
-    const { id } = req.params;
-    
-    // Vérifier si le prestataire existe
-    const prestataire = await Prestataire.findById(id).maxTimeMS(5000);
-    if (!prestataire) {
-      return res.status(404).json({
-        success: false,
-        error: 'Prestataire non trouvé'
-      });
-    }
-
-    // Rechercher tous les projets où le prestataire est impliqué
-    const projects = await Project.find({ 
-      'prestataires.prestataire': id 
-    })
-    .populate('organizer', 'company email')
-    .populate('event', 'name startDate endDate location')
-    .select('-__v')
-    .maxTimeMS(5000);
-
-    res.status(200).json({
-      success: true,
-      data: projects
-    });
-  } catch (error) {
-    console.error('Erreur Backend:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Erreur lors de la récupération des projets'
-    });
-  }
-};
-
-// Obtenir les statistiques d'un prestataire
-exports.getPrestataireStats = async (req, res) => {
-  try {
-    const { id } = req.params;
-    
-    // Vérifier si le prestataire existe
-    const prestataire = await Prestataire.findById(id).maxTimeMS(5000);
-    if (!prestataire) {
-      return res.status(404).json({
-        success: false,
-        error: 'Prestataire non trouvé'
-      });
-    }
-
-    // Récupérer tous les projets du prestataire
-    const projects = await Project.find({ 
-      'prestataires.prestataire': id 
-    }).maxTimeMS(5000);
-
-    // Récupérer toutes les évaluations
-    const ratings = await Rating.find({ 
-      prestataire: id 
-    }).maxTimeMS(5000);
-
-    // Calculer les statistiques
-    const stats = {
-      totalProjects: projects.length,
-      completedProjects: projects.filter(p => p.status === 'completed').length,
-      ongoingProjects: projects.filter(p => p.status === 'in_progress').length,
-      totalRatings: ratings.length,
-      averageRating: ratings.length > 0 
-        ? ratings.reduce((acc, curr) => acc + curr.score, 0) / ratings.length 
-        : 0,
-      criteriaStats: {
-        professionnalisme: ratings.length > 0 
-          ? ratings.reduce((acc, curr) => acc + curr.criteria.professionnalisme, 0) / ratings.length 
-          : 0,
-        communication: ratings.length > 0 
-          ? ratings.reduce((acc, curr) => acc + curr.criteria.communication, 0) / ratings.length 
-          : 0,
-        qualiteService: ratings.length > 0 
-          ? ratings.reduce((acc, curr) => acc + curr.criteria.qualiteService, 0) / ratings.length 
-          : 0,
-        rapportQualitePrix: ratings.length > 0 
-          ? ratings.reduce((acc, curr) => acc + curr.criteria.rapportQualitePrix, 0) / ratings.length 
-          : 0
-      },
-      revenueStats: {
-        totalRevenue: projects.reduce((acc, curr) => acc + (curr.budget || 0), 0),
-        averageProjectValue: projects.length > 0 
-          ? projects.reduce((acc, curr) => acc + (curr.budget || 0), 0) / projects.length 
-          : 0
-      }
-    };
-
-    res.status(200).json({
-      success: true,
-      data: stats
-    });
-  } catch (error) {
-    console.error('Erreur Backend:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Erreur lors de la récupération des statistiques'
-    });
-  }
-};
