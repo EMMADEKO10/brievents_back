@@ -1,6 +1,7 @@
 const express = require('express');
 const prestataireRouter = express.Router();
 const prestataireController = require('../Controllers/prestataire.controller');
+const prestataireStatController = require('../Controllers/prestataireStat/prestataire.stat.controller');
 
 // Route pour la création d'un prestataire en attente
 prestataireRouter.post('/register', prestataireController.createPendingPrestataire);
@@ -15,5 +16,13 @@ prestataireRouter.get('/:id', prestataireController.getPrestataireById);
 prestataireRouter.get('/:id/contacts', prestataireController.getPrestataireContacts);
 // Route pour ajouter une évaluation pour un prestataire
 prestataireRouter.post('/:id/ratings', prestataireController.addRating);
+
+// Route pour obtenir les events d'un prestataire
+prestataireRouter.get('/:id/events', prestataireStatController.getPrestataireEvents);
+// Route pour obtenir les statistiques d'un prestataire
+prestataireRouter.get('/:id/stats', prestataireStatController.getPrestataireStats);
+
+// Route pour obtenir les informations complètes d'un prestataire
+prestataireRouter.get('/:id/full-info', prestataireStatController.getPrestataireFullInfo);
 
 module.exports = prestataireRouter;
