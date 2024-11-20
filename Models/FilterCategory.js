@@ -1,11 +1,7 @@
 const mongoose = require('mongoose');
 
-const filterCategorySchema = new mongoose.Schema({
-  type: {
-    type: String,
-    required: true,
-    enum: ['location', 'eventType', 'theme']
-  },
+// Schéma de base commun
+const baseFilterSchema = {
   name: {
     type: String,
     required: true
@@ -18,8 +14,36 @@ const filterCategorySchema = new mongoose.Schema({
     type: Number,
     default: 0
   }
-}, {
-  timestamps: true
-});
+};
 
-module.exports = mongoose.model('FilterCategory', filterCategorySchema); 
+// Schéma pour la localisation
+const locationSchema = new mongoose.Schema({
+  ...baseFilterSchema,
+  coordinates: {
+    lat: Number,
+    lng: Number
+  }
+}, { timestamps: true });
+
+// Schéma pour le type d'événement
+const eventTypeSchema = new mongoose.Schema({
+  ...baseFilterSchema,
+  icon: String
+}, { timestamps: true });
+
+// Schéma pour le thème
+const themeSchema = new mongoose.Schema({
+  ...baseFilterSchema,
+  color: String
+}, { timestamps: true });
+
+// Création des modèles
+const Location = mongoose.model('Location', locationSchema);
+const EventType = mongoose.model('EventType', eventTypeSchema);
+const Theme = mongoose.model('Theme', themeSchema);
+
+module.exports = {
+  Location,
+  EventType,
+  Theme
+}; 
