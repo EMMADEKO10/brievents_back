@@ -14,6 +14,7 @@ const organizerRouter = require("./routes/organizer.routes")
 const userRouter = require("./routes/users.routes")
 const parrainageRouter = require("./routes/parrainage.routes")
 const notationRouter = require("./routes/notationPrestataire.routes")
+const packRouter = require("./routes/pack.routes")
 const filterRoutes = require('./routes/filterRoutes');
 // ---------------------------
 const app = express();
@@ -39,6 +40,7 @@ app.use('/api/prestataire', prestataireRouter);
 app.use('/api/parrainage', parrainageRouter);
 app.use('/api/notation', notationRouter);
 app.use('/api/filters', filterRoutes);
+app.use('/api/pack', packRouter);
 // Route racine
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'views', 'index.html'));
