@@ -2,6 +2,9 @@ const crypto = require('crypto');
 const { PendingSponsor, Sponsor } = require('../Models/sponsor.model');
 const { PendingUser, User } = require('../Models/user.model');
 const { sendEmail } = require('../configs/sendEmails');
+const { PaymentPack } = require('../Models/paymentPack.model');
+const Pack = require('../Models/pack.model');
+const mongoose = require('mongoose');
 
 // Création d’un sponsor en attente
 exports.createPendingSponsor = async (req, res) => {
@@ -128,3 +131,109 @@ exports.confirmSponsor = async (req, res) => {
   }
 };
 
+// ---------------------------------------------------------------------------------------------------------
+
+exports.getSponsorPacks = async (req, res) => {
+  const { sponsorId } = req.params;
+
+  try {
+    // Récupérer d'abord le sponsor pour avoir l'ID de l'utilisateur associé
+    const userIfSponsor = await User.findById(sponsorId);
+    console.log(`User trouvé:`, userIfSponsor);
+    
+    // Correction ici : recherche du sponsor avec le bon format de requête
+    const sponsor = await Sponsor.findOne({ user: userIfSponsor._id });
+    console.log(`Sponsor trouvé:`, sponsor);
+    
+    if (!sponsor) {
+      return res.status(404).json({
+        success: false,
+        message: 'Sponsor non trouvé'
+      });
+    }
+
+    const sponsoredPacks = await PaymentPack.find({ user: sponsor.user })
+      .populate({
+        path: 'pack',
+        model: 'Pack',
+        populate: {
+          path: 'event',
+          model: 'Event',
+          select: 'title description startDate endDate createdBy',
+          populate: {
+            path: 'createdBy',
+            model: 'User',
+            select: 'name email'
+          }
+        }
+      });
+    console.log(`Packs sponsorisés:`, sponsoredPacks);
+    res.status(200).json({
+      success: true,
+      data: sponsoredPacks
+    });
+  } catch (error) {
+    console.error('Erreur:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Erreur lors de la récupération des packs sponsorisés'
+    });
+  }
+};
+
+exports.getSponsorStats = async (req, res) => {
+  const { sponsorId } = req.params;
+  console.log(`Sponsor ID:`, sponsorId);
+
+  try {
+    // Récupérer d'abord les PaymentPacks du sponsor
+    const paymentPacks = await PaymentPack.find({ user: sponsorId })
+      .populate({
+        path: 'pack',
+        select: 'priority event'
+      });
+
+    // Calculer les statistiques manuellement
+    const eventIds = new Set();
+    let totalInvestment = 0;
+    const priorityCount = { 1: 0, 2: 0, 3: 0 };
+
+    paymentPacks.forEach(payment => {
+      // Compter les événements uniques
+      if (payment.pack && payment.pack.event) {
+        eventIds.add(payment.pack.event.toString());
+      }
+
+      // Calculer l'investissement total
+      totalInvestment += payment.amount || 0;
+
+      // Compter la distribution des priorités
+      if (payment.pack && payment.pack.priority) {
+        priorityCount[payment.pack.priority] = 
+          (priorityCount[payment.pack.priority] || 0) + 1;
+      }
+    });
+
+    // Formater la distribution des packs
+    const packDistribution = Object.entries(priorityCount).map(([priority, count]) => ({
+      _id: parseInt(priority),
+      count
+    }));
+    console.log(`Répartition par type de pack:`, packDistribution);
+
+    res.status(200).json({
+      success: true,
+      stats: {
+        totalEventsSponsored: eventIds.size,
+        totalInvestment,
+        packDistribution,
+      }
+    });
+  } catch (error) {
+    console.error('Erreur:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Erreur lors de la récupération des statistiques'
+    });
+  }
+};

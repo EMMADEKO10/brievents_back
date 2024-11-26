@@ -7,4 +7,8 @@ sponsorRouter.post('/register', sponsorController.createPendingSponsor);
 // Route pour la confirmation de l'inscription du sponsor
 sponsorRouter.get('/confirm/:token', sponsorController.confirmSponsor);
 
+// Routes pour les statistiques des sponsors
+sponsorRouter.get('/:sponsorId/packs', sponsorController.getSponsorPacks);
+sponsorRouter.get('/:sponsorId/stats', sponsorController.getSponsorStats);
+
 module.exports = sponsorRouter;
