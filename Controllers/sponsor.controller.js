@@ -237,3 +237,74 @@ exports.getSponsorStats = async (req, res) => {
     });
   }
 };
+
+// Obtenir le profil du sponsor
+exports.getSponsorProfile = async (req, res) => {
+  const { sponsorId } = req.params;
+  
+  try {
+    const sponsor = await Sponsor.findOne({ user: sponsorId })
+      .populate('user', 'name lastName email');
+      
+    if (!sponsor) {
+      return res.status(404).json({
+        success: false,
+        message: 'Sponsor non trouvé'
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      data: {
+        name: sponsor.user.name,
+        lastName: sponsor.user.lastName,
+        email: sponsor.user.email,
+        company: sponsor.company,
+        language: sponsor.language
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Erreur lors de la récupération du profil'
+    });
+  }
+};
+
+// Mettre à jour le profil du sponsor
+exports.updateSponsorProfile = async (req, res) => {
+  const { sponsorId } = req.params;
+  const updates = req.body;
+  
+  try {
+    const sponsor = await Sponsor.findOne({ user: sponsorId });
+    if (!sponsor) {
+      return res.status(404).json({
+        success: false,
+        message: 'Sponsor non trouvé'
+      });
+    }
+
+    // Mise à jour des informations du sponsor
+    sponsor.company = updates.company;
+    sponsor.language = updates.language;
+    await sponsor.save();
+
+    // Mise à jour des informations de l'utilisateur
+    await User.findByIdAndUpdate(sponsorId, {
+      name: updates.name,
+      lastName: updates.lastName,
+      email: updates.email
+    });
+
+    res.status(200).json({
+      success: true,
+      message: 'Profil mis à jour avec succès'
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Erreur lors de la mise à jour du profil'
+    });
+  }
+};
