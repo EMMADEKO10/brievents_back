@@ -36,6 +36,29 @@ exports.getUserValidEvents = async (req, res) => {
   }
 };
 
+// Obtenir tous les événements en attente d'un utilisateur
+exports.getUserPendingEvents = async (req, res) => {
+  try {
+    const userId = req.params.userId;
+    
+    const events = await Event.find({
+      createdBy: userId,
+      status: 'En attente' // Ne retourne que les événements en attente
+    }).populate('createdBy', 'name email');
+
+    if (!events) {
+      return res.status(404).json({ message: 'Aucun événement trouvé pour cet utilisateur' });
+    }
+
+    res.status(200).json(events);
+  } catch (error) {
+    res.status(500).json({ 
+      message: 'Erreur lors de la récupération des événements',
+      error: error.message 
+    });
+  }
+};
+
 exports.createEvent = async (req, res) => {
   try {
     // Vérifier si eventData est présent et valide
@@ -243,6 +266,8 @@ exports.getEventsByType = async (req, res) => {
       res.status(500).json({ message: error.message });
     }
   };
+
+  
   
   // Mettre à jour le statut d'un événement
   exports.updateEventStatus = async (req, res) => {

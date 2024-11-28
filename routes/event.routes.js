@@ -19,6 +19,7 @@ eventRouter.delete('/:id/prestataires/:prestataireId', eventController.removePre
 // Route pour obtenir les événements par type
 eventRouter.get('/type/:eventType', eventController.getEventsByType);
 eventRouter.get('/user/:userId', eventController.getUserValidEvents);
+eventRouter.get('/user/pending/:userId', eventController.getUserPendingEvents);
 
 
 module.exports = eventRouter;
