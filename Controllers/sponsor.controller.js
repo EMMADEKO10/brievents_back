@@ -244,7 +244,7 @@ exports.getSponsorProfile = async (req, res) => {
   
   try {
     const sponsor = await Sponsor.findOne({ user: sponsorId })
-      .populate('user', 'name lastName email');
+      .populate('user', 'name lastName email phone');
       
     if (!sponsor) {
       return res.status(404).json({
@@ -256,11 +256,12 @@ exports.getSponsorProfile = async (req, res) => {
     res.status(200).json({
       success: true,
       data: {
-        name: sponsor.user.name,
-        lastName: sponsor.user.lastName,
-        email: sponsor.user.email,
-        company: sponsor.company,
-        language: sponsor.language
+        name: sponsor.user.name || "",
+        lastName: sponsor.user.lastName || "",
+        email: sponsor.user.email || "",
+        phone: sponsor.phone || "",
+        company: sponsor.company || "",
+        language: sponsor.language || "fr"
       }
     });
   } catch (error) {
@@ -277,18 +278,23 @@ exports.updateSponsorProfile = async (req, res) => {
   const updates = req.body;
   
   try {
-    const sponsor = await Sponsor.findOne({ user: sponsorId });
+    // Mise à jour des informations du sponsor
+    const sponsor = await Sponsor.findOneAndUpdate(
+      { user: sponsorId },
+      {
+        company: updates.company,
+        language: updates.language,
+        phone: updates.phone
+      },
+      { new: true }
+    );
+
     if (!sponsor) {
       return res.status(404).json({
         success: false,
         message: 'Sponsor non trouvé'
       });
     }
-
-    // Mise à jour des informations du sponsor
-    sponsor.company = updates.company;
-    sponsor.language = updates.language;
-    await sponsor.save();
 
     // Mise à jour des informations de l'utilisateur
     await User.findByIdAndUpdate(sponsorId, {
@@ -302,6 +308,7 @@ exports.updateSponsorProfile = async (req, res) => {
       message: 'Profil mis à jour avec succès'
     });
   } catch (error) {
+    console.error('Erreur de mise à jour:', error);
     res.status(500).json({
       success: false,
       message: 'Erreur lors de la mise à jour du profil'
