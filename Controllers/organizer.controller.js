@@ -124,3 +124,58 @@ exports.confirmOrganizer = async (req, res) => {
       });
     }
   };
+
+// Fonction pour calculer le taux d'engagement
+const calculateEngagementRate = (events) => {
+  if (!events || events.length === 0) return 0;
+  
+  let totalEngagement = 0;
+  let totalEvents = events.length;
+  
+  events.forEach(event => {
+    // Calcul basé sur le nombre de participants par rapport à la capacité maximale
+    const participantsCount = event.participants?.length || 0;
+    const maxCapacity = event.maxCapacity || 100; // Valeur par défaut si non définie
+    const eventEngagement = (participantsCount / maxCapacity) * 100;
+    totalEngagement += eventEngagement;
+  });
+  
+  // Retourne la moyenne d'engagement en pourcentage
+  return Math.round(totalEngagement / totalEvents);
+};
+
+exports.getDashboardData = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    console.log('userId reçu:', userId);
+    
+    // Récupérer les données de l'organisateur
+    const organizer = await Organizer.findOne({ user: userId })
+      // .populate('events')
+      // .populate('messages')
+      // .populate('tasks');
+    
+    console.log('Données organizer trouvées:', organizer);
+    
+    if (!organizer) {
+      console.log('Aucun organizer trouvé pour userId:', userId);
+      return res.status(404).json({ error: 'Organisateur non trouvé' });
+    }
+      
+    // Formater les données pour le dashboard
+    const dashboardData = {
+      totalEvents: organizer.events?.length || 0,
+      totalParticipants: organizer.events?.reduce((acc, event) => acc + (event.participants?.length || 0), 0) || 0,
+      engagementRate: calculateEngagementRate(organizer.events),
+      recentMessages: organizer.messages?.slice(0, 5) || [],
+      pendingTasks: organizer.tasks?.filter(task => task.status === 'pending') || [],
+    };
+    
+    console.log('dashboardData formatées:', dashboardData);
+    
+    res.status(200).json(dashboardData);
+  } catch (error) {
+    console.error('Erreur dans getDashboardData:', error);
+    res.status(500).json({ error: 'Erreur lors de la récupération des données' });
+  }
+};
