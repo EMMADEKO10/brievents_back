@@ -190,12 +190,14 @@ exports.getOrganizerSettings = async (req, res) => {
       return res.status(404).json({ error: 'Organisateur non trouvé' });
     }
 
+    // Ajout de lastName et phone dans les données retournées
     const settings = {
       name: organizer.user.name,
+      lastName: organizer.lastName, // Ajout du champ lastName
       email: organizer.user.email,
       company: organizer.company,
-      language: organizer.language,
-      // Ajoutez d'autres champs si nécessaire
+      phone: organizer.phone,     // Ajout du champ phone
+      language: organizer.language
     };
 
     res.status(200).json(settings);
@@ -216,12 +218,14 @@ exports.updateOrganizerSettings = async (req, res) => {
       return res.status(404).json({ error: 'Organisateur non trouvé' });
     }
 
-    // Mise à jour des champs de l'organisateur
+    // Mise à jour de tous les champs de l'organisateur
     organizer.company = updates.company;
     organizer.language = updates.language;
+    organizer.lastName = updates.lastName; // Ajout de la mise à jour du lastName
+    organizer.phone = updates.phone;       // Ajout de la mise à jour du phone
     await organizer.save();
 
-    // Mise à jour des champs de l'utilisateur si nécessaire
+    // Mise à jour des champs de l'utilisateur
     const user = await User.findById(userId);
     if (user) {
       user.name = updates.name;
@@ -229,7 +233,13 @@ exports.updateOrganizerSettings = async (req, res) => {
       await user.save();
     }
 
-    res.status(200).json({ message: 'Paramètres mis à jour avec succès' });
+    res.status(200).json({ 
+      message: 'Paramètres mis à jour avec succès',
+      data: {
+        ...updates,
+        _id: organizer._id
+      }
+    });
   } catch (error) {
     console.error('Erreur dans updateOrganizerSettings:', error);
     res.status(500).json({ error: 'Erreur lors de la mise à jour des paramètres' });
