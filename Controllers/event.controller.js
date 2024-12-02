@@ -367,3 +367,49 @@ exports.getEventsByType = async (req, res) => {
       res.status(500).json({ message: error.message });
     }
   };
+
+  // Ajouter cette nouvelle méthode dans event.controller.js
+  exports.getAllUserEvents = async (req, res) => {
+    try {
+      const userId = req.params.userId;
+      
+      // Récupérer tous les événements de l'utilisateur
+      const events = await Event.find({ createdBy: userId })
+        .populate('createdBy', 'name email')
+        .sort({ createdAt: -1 }); // Tri par date de création décroissante
+
+      if (!events) {
+        return res.status(404).json({ 
+          success: false,
+          message: 'Aucun événement trouvé pour cet utilisateur' 
+        });
+      }
+
+      // Pour chaque événement, récupérer les statistiques associées
+      const eventsWithStats = await Promise.all(events.map(async (event) => {
+        // Vous pouvez ajouter ici d'autres statistiques si nécessaire
+        const stats = {
+          totalSponsors: 0, // À implémenter selon votre logique
+          totalRevenue: 0,  // À implémenter selon votre logique
+          // ... autres statistiques
+        };
+
+        return {
+          ...event.toObject(),
+          stats
+        };
+      }));
+
+      res.status(200).json({
+        success: true,
+        data: eventsWithStats
+      });
+    } catch (error) {
+      console.error('Erreur dans getAllUserEvents:', error);
+      res.status(500).json({ 
+        success: false,
+        message: 'Erreur lors de la récupération des événements',
+        error: error.message 
+      });
+    }
+  };
