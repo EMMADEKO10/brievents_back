@@ -9,4 +9,10 @@ organizerRouter.get('/confirm/:token', organizerController.confirmOrganizer);
 // Route pour la récupération des données du dashboard
 organizerRouter.get('/dashboard/:userId', organizerController.getDashboardData);
 
+// Route pour récupérer les paramètres
+organizerRouter.get('/settings/:userId', organizerController.getOrganizerSettings);
+
+// Route pour mettre à jour les paramètres
+organizerRouter.put('/settings/:userId', organizerController.updateOrganizerSettings);
+
 module.exports = organizerRouter;

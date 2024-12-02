@@ -179,3 +179,59 @@ exports.getDashboardData = async (req, res) => {
     res.status(500).json({ error: 'Erreur lors de la récupération des données' });
   }
 };
+
+// Récupération des paramètres de l'organisateur
+exports.getOrganizerSettings = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const organizer = await Organizer.findOne({ user: userId }).populate('user');
+    
+    if (!organizer) {
+      return res.status(404).json({ error: 'Organisateur non trouvé' });
+    }
+
+    const settings = {
+      name: organizer.user.name,
+      email: organizer.user.email,
+      company: organizer.company,
+      language: organizer.language,
+      // Ajoutez d'autres champs si nécessaire
+    };
+
+    res.status(200).json(settings);
+  } catch (error) {
+    console.error('Erreur dans getOrganizerSettings:', error);
+    res.status(500).json({ error: 'Erreur lors de la récupération des paramètres' });
+  }
+};
+
+// Mise à jour des paramètres de l'organisateur
+exports.updateOrganizerSettings = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const updates = req.body;
+
+    const organizer = await Organizer.findOne({ user: userId });
+    if (!organizer) {
+      return res.status(404).json({ error: 'Organisateur non trouvé' });
+    }
+
+    // Mise à jour des champs de l'organisateur
+    organizer.company = updates.company;
+    organizer.language = updates.language;
+    await organizer.save();
+
+    // Mise à jour des champs de l'utilisateur si nécessaire
+    const user = await User.findById(userId);
+    if (user) {
+      user.name = updates.name;
+      user.email = updates.email;
+      await user.save();
+    }
+
+    res.status(200).json({ message: 'Paramètres mis à jour avec succès' });
+  } catch (error) {
+    console.error('Erreur dans updateOrganizerSettings:', error);
+    res.status(500).json({ error: 'Erreur lors de la mise à jour des paramètres' });
+  }
+};
