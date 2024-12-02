@@ -183,57 +183,165 @@ exports.getSponsorPacks = async (req, res) => {
 
 exports.getSponsorStats = async (req, res) => {
   const { sponsorId } = req.params;
-  console.log(`Sponsor ID:`, sponsorId);
 
   try {
-    // Récupérer d'abord les PaymentPacks du sponsor
+    // Récupérer le sponsor
+    const sponsor = await Sponsor.findOne({ user: sponsorId });
+    if (!sponsor) {
+      return res.status(404).json({
+        success: false,
+        message: 'Sponsor non trouvé'
+      });
+    }
+
+    // Récupérer tous les packs payés par le sponsor avec leurs détails
     const paymentPacks = await PaymentPack.find({ user: sponsorId })
       .populate({
         path: 'pack',
-        select: 'priority event'
-      });
+        model: 'Pack',
+        select: 'name priority price maxSponsors currentSponsors benefits event isActive',
+        populate: {
+          path: 'event',
+          model: 'Event',
+          select: 'title startDate endDate'
+        }
+      })
+      .sort({ createdAt: -1 }); // Trier par date décroissante
 
-    // Calculer les statistiques manuellement
-    const eventIds = new Set();
-    let totalInvestment = 0;
-    const priorityCount = { 1: 0, 2: 0, 3: 0 };
+    // Initialiser les statistiques
+    const stats = {
+      totalInvestment: 0,
+      activeEvents: 0,
+      completedEvents: 0,
+      packDistribution: [
+        { _id: 1, count: 0, label: "Bronze", totalValue: 0 },
+        { _id: 2, count: 0, label: "Silver", totalValue: 0 },
+        { _id: 3, count: 0, label: "Gold", totalValue: 0 }
+      ],
+      monthlyStats: {},
+      benefitsUtilization: 0
+    };
+
+    const currentDate = new Date();
 
     paymentPacks.forEach(payment => {
-      // Compter les événements uniques
-      if (payment.pack && payment.pack.event) {
-        eventIds.add(payment.pack.event.toString());
-      }
+      if (payment.pack && payment.pack.isActive) {
+        // Calcul de l'investissement total
+        stats.totalInvestment += payment.amount;
 
-      // Calculer l'investissement total
-      totalInvestment += payment.amount || 0;
+        // Distribution des packs
+        const packIndex = stats.packDistribution.findIndex(p => p._id === payment.pack.priority);
+        if (packIndex !== -1) {
+          stats.packDistribution[packIndex].count += 1;
+          stats.packDistribution[packIndex].totalValue += payment.amount;
+        }
 
-      // Compter la distribution des priorités
-      if (payment.pack && payment.pack.priority) {
-        priorityCount[payment.pack.priority] = 
-          (priorityCount[payment.pack.priority] || 0) + 1;
+        // Comptage des événements actifs/complétés
+        if (payment.pack.event) {
+          const eventEndDate = new Date(payment.pack.event.endDate);
+          if (eventEndDate > currentDate) {
+            stats.activeEvents += 1;
+          } else {
+            stats.completedEvents += 1;
+          }
+        }
+
+        // Statistiques mensuelles
+        const paymentMonth = payment.createdAt.toISOString().slice(0, 7);
+        if (!stats.monthlyStats[paymentMonth]) {
+          stats.monthlyStats[paymentMonth] = {
+            investment: 0,
+            count: 0
+          };
+        }
+        stats.monthlyStats[paymentMonth].investment += payment.amount;
+        stats.monthlyStats[paymentMonth].count += 1;
       }
     });
 
-    // Formater la distribution des packs
-    const packDistribution = Object.entries(priorityCount).map(([priority, count]) => ({
-      _id: parseInt(priority),
-      count
-    }));
-    console.log(`Répartition par type de pack:`, packDistribution);
+    // Calcul du taux d'utilisation des avantages
+    const totalPacks = paymentPacks.length;
+    const activePacks = paymentPacks.filter(p => p.pack && p.pack.isActive).length;
+    stats.benefitsUtilization = totalPacks > 0 ? (activePacks / totalPacks) * 100 : 0;
+
+    // Calcul de la croissance mensuelle
+    const calculateMonthlyGrowth = (paymentPacks) => {
+      const currentDate = new Date();
+      const currentMonth = currentDate.getMonth();
+      const currentYear = currentDate.getFullYear();
+
+      // Filtrer les paiements du mois en cours
+      const currentMonthPayments = paymentPacks.filter(payment => {
+        const paymentDate = new Date(payment.createdAt);
+        return paymentDate.getMonth() === currentMonth && 
+               paymentDate.getFullYear() === currentYear;
+      });
+
+      // Filtrer les paiements du mois précédent
+      const lastMonthPayments = paymentPacks.filter(payment => {
+        const paymentDate = new Date(payment.createdAt);
+        return paymentDate.getMonth() === (currentMonth - 1 < 0 ? 11 : currentMonth - 1) && 
+               paymentDate.getFullYear() === (currentMonth === 0 ? currentYear - 1 : currentYear);
+      });
+
+      // Calculer les totaux
+      const currentMonthTotal = currentMonthPayments.reduce((sum, payment) => sum + payment.amount, 0);
+      const lastMonthTotal = lastMonthPayments.reduce((sum, payment) => sum + payment.amount, 0);
+
+      // Calculer le taux de croissance
+      let growthRate = 0;
+      if (lastMonthTotal > 0) {
+        growthRate = ((currentMonthTotal - lastMonthTotal) / lastMonthTotal) * 100;
+      } else if (currentMonthTotal > 0) {
+        growthRate = 100; // Si pas de dépenses le mois dernier mais des dépenses ce mois-ci
+      }
+
+      return {
+        growthRate: Math.round(growthRate * 10) / 10,
+        currentMonthTotal,
+        lastMonthTotal
+      };
+    };
+
+    // Dans la préparation de la réponse
+    const growthData = calculateMonthlyGrowth(paymentPacks);
+
+    const response = {
+      stats: {
+        totalInvestment: Math.round(stats.totalInvestment),
+        activeEvents: stats.activeEvents,
+        completedEvents: stats.completedEvents,
+        packDistribution: stats.packDistribution.map(pack => ({
+          ...pack,
+          percentage: totalPacks > 0 ? (pack.count / totalPacks) * 100 : 0
+        })),
+        growthRate: growthData.growthRate,
+        benefitsUtilization: Math.round(stats.benefitsUtilization),
+        recentActivity: paymentPacks.slice(0, 5).map(payment => ({
+          date: payment.createdAt,
+          eventName: payment.pack?.event?.title || 'N/A',
+          packName: payment.pack?.name || 'N/A',
+          amount: payment.amount,
+          priority: payment.pack?.priority || 0
+        })),
+        monthlyData: {
+          current: growthData.currentMonthTotal,
+          previous: growthData.lastMonthTotal
+        }
+      }
+    };
 
     res.status(200).json({
       success: true,
-      stats: {
-        totalEventsSponsored: eventIds.size,
-        totalInvestment,
-        packDistribution,
-      }
+      ...response
     });
+
   } catch (error) {
-    console.error('Erreur:', error);
+    console.error('Erreur lors de la récupération des statistiques:', error);
     res.status(500).json({
       success: false,
-      message: 'Erreur lors de la récupération des statistiques'
+      message: 'Erreur lors de la récupération des statistiques',
+      error: error.message
     });
   }
 };
