@@ -3,7 +3,7 @@ const { cloudinary, getUploadFolder } = require('../cloudinary');
 const User = require('../Models/user.model');
 const Organizer = require('../Models/organizer.model');
 const { Prestataire } = require('../Models/prestataire.model');
-
+// ----------------------------------------------------------------------
 exports.getAllEventsClient = async (req, res) => {
   try {
     const events = await Event.find({});
@@ -40,7 +40,6 @@ exports.getUserValidEvents = async (req, res) => {
 exports.getUserPendingEvents = async (req, res) => {
   try {
     const userId = req.params.userId;
-    
     const events = await Event.find({
       createdBy: userId,
       status: 'En attente' // Ne retourne que les événements en attente

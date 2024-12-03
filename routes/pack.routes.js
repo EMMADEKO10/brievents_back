@@ -12,5 +12,6 @@ packRouter.get('/event/:eventId/packs', packController.getPacksByEvent);
 packRouter.post('/', packController.createPack);
 packRouter.put('/:id',  packController.updatePack);
 packRouter.delete('/:id',  packController.deletePack);
+packRouter.get('/:packId/sponsors', packController.getPackSponsors);
 
 module.exports = packRouter;
