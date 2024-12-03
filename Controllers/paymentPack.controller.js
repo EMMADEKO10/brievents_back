@@ -81,7 +81,7 @@ const addPendingPaymentPack = async (req, res) => {
       console.log(`Nouv mis à jour:`, values);
         // Créer une notification de crédit à l'utilisateur créé ou mis à jour
         // Utiliser le nom de l'utilisateur pour la création de la notification
-      const message = `Demande de crédit pour un montant de €${values}`
+      const message = `Demande de crédit pour un montant de ${values}`
         // await createCreditNotification(message, user.name );    
         // Supprimer le paiement en attente seulement après avoir réussi à créer/mettre à jour le paiement
       await PendingPaymentPack.deleteOne({ reference: pendingPaymentPack.reference });
