@@ -16,6 +16,7 @@ const SponsorSchema = new mongoose.Schema({
   user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   company: { type: String, required: true },
   language: { type: String, required: true },
+  phone: { type: String },
 }, { timestamps: true });
 
 const PendingSponsor = mongoose.model('PendingSponsor', PendingSponsorSchema);

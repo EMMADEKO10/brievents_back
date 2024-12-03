@@ -11,4 +11,8 @@ sponsorRouter.get('/confirm/:token', sponsorController.confirmSponsor);
 sponsorRouter.get('/:sponsorId/packs', sponsorController.getSponsorPacks);
 sponsorRouter.get('/:sponsorId/stats', sponsorController.getSponsorStats);
 
+// Routes pour la gestion du profil
+sponsorRouter.get('/:sponsorId/profile', sponsorController.getSponsorProfile);
+sponsorRouter.put('/:sponsorId/update', sponsorController.updateSponsorProfile);
+
 module.exports = sponsorRouter;

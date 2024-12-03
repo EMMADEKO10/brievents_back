@@ -124,3 +124,124 @@ exports.confirmOrganizer = async (req, res) => {
       });
     }
   };
+
+// Fonction pour calculer le taux d'engagement
+const calculateEngagementRate = (events) => {
+  if (!events || events.length === 0) return 0;
+  
+  let totalEngagement = 0;
+  let totalEvents = events.length;
+  
+  events.forEach(event => {
+    // Calcul basé sur le nombre de participants par rapport à la capacité maximale
+    const participantsCount = event.participants?.length || 0;
+    const maxCapacity = event.maxCapacity || 100; // Valeur par défaut si non définie
+    const eventEngagement = (participantsCount / maxCapacity) * 100;
+    totalEngagement += eventEngagement;
+  });
+  
+  // Retourne la moyenne d'engagement en pourcentage
+  return Math.round(totalEngagement / totalEvents);
+};
+
+exports.getDashboardData = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    console.log('userId reçu:', userId);
+    
+    // Récupérer les données de l'organisateur
+    const organizer = await Organizer.findOne({ user: userId })
+      // .populate('events')
+      // .populate('messages')
+      // .populate('tasks');
+    
+    console.log('Données organizer trouvées:', organizer);
+    
+    if (!organizer) {
+      console.log('Aucun organizer trouvé pour userId:', userId);
+      return res.status(404).json({ error: 'Organisateur non trouvé' });
+    }
+      
+    // Formater les données pour le dashboard
+    const dashboardData = {
+      totalEvents: organizer.events?.length || 0,
+      totalParticipants: organizer.events?.reduce((acc, event) => acc + (event.participants?.length || 0), 0) || 0,
+      engagementRate: calculateEngagementRate(organizer.events),
+      recentMessages: organizer.messages?.slice(0, 5) || [],
+      pendingTasks: organizer.tasks?.filter(task => task.status === 'pending') || [],
+    };
+    
+    console.log('dashboardData formatées:', dashboardData);
+    
+    res.status(200).json(dashboardData);
+  } catch (error) {
+    console.error('Erreur dans getDashboardData:', error);
+    res.status(500).json({ error: 'Erreur lors de la récupération des données' });
+  }
+};
+
+// Récupération des paramètres de l'organisateur
+exports.getOrganizerSettings = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const organizer = await Organizer.findOne({ user: userId }).populate('user');
+    
+    if (!organizer) {
+      return res.status(404).json({ error: 'Organisateur non trouvé' });
+    }
+
+    // Ajout de lastName et phone dans les données retournées
+    const settings = {
+      name: organizer.user.name,
+      lastName: organizer.lastName, // Ajout du champ lastName
+      email: organizer.user.email,
+      company: organizer.company,
+      phone: organizer.phone,     // Ajout du champ phone
+      language: organizer.language
+    };
+
+    res.status(200).json(settings);
+  } catch (error) {
+    console.error('Erreur dans getOrganizerSettings:', error);
+    res.status(500).json({ error: 'Erreur lors de la récupération des paramètres' });
+  }
+};
+
+// Mise à jour des paramètres de l'organisateur
+exports.updateOrganizerSettings = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const updates = req.body;
+
+    const organizer = await Organizer.findOne({ user: userId });
+    if (!organizer) {
+      return res.status(404).json({ error: 'Organisateur non trouvé' });
+    }
+
+    // Mise à jour de tous les champs de l'organisateur
+    organizer.company = updates.company;
+    organizer.language = updates.language;
+    organizer.lastName = updates.lastName; // Ajout de la mise à jour du lastName
+    organizer.phone = updates.phone;       // Ajout de la mise à jour du phone
+    await organizer.save();
+
+    // Mise à jour des champs de l'utilisateur
+    const user = await User.findById(userId);
+    if (user) {
+      user.name = updates.name;
+      user.email = updates.email;
+      await user.save();
+    }
+
+    res.status(200).json({ 
+      message: 'Paramètres mis à jour avec succès',
+      data: {
+        ...updates,
+        _id: organizer._id
+      }
+    });
+  } catch (error) {
+    console.error('Erreur dans updateOrganizerSettings:', error);
+    res.status(500).json({ error: 'Erreur lors de la mise à jour des paramètres' });
+  }
+};
