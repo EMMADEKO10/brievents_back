@@ -30,4 +30,7 @@ prestataireRouter.get('/:id/upcoming-events', prestataireStatController.getPrest
 // Route pour la mise à jour des paramètres
 prestataireRouter.put('/:id/update', prestataireController.updatePrestataireSettings);
 
+//Roue pour l'affichage des prestataires d'un event
+prestataireRouter.get('/:id/event/prestataires', prestataireController.getPrestatairesByEventId);
+
 module.exports = prestataireRouter;

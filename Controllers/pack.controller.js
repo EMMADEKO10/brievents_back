@@ -1,4 +1,5 @@
 const Pack = require('../Models/pack.model');
+const {PaymentPack} = require('../Models/paymentPack.model');
 
 const packController = {
     // Créer un nouveau pack
@@ -80,6 +81,34 @@ const packController = {
             res.status(200).json({ message: "Pack supprimé avec succès" });
         } catch (err) {
             res.status(500).json({ message: err.message });
+        }
+    },
+
+    getPackSponsors: async (req, res) => {
+        try {
+            const { packId } = req.params;
+            // Récupérer tous les paiements pour ce pack avec les informations des utilisateurs
+            const sponsorPayments = await PaymentPack.find({ pack: packId })
+                .populate({
+                    path: 'user',
+                    select: 'name lastName email',
+                    model: 'User'
+                })
+                .sort({ createdAt: -1 }) // Trier par date décroissante
+                .select('amount createdAt user');
+    
+            // Formater les données pour le front-end
+            const formattedSponsors = sponsorPayments.map(payment => ({
+                sponsorName:payment.user.name,
+                email: payment.user.email,
+                amount: payment.amount,
+                sponsoredAt: payment.createdAt
+            }));
+    
+            res.json(formattedSponsors);
+        } catch (error) {
+            console.error('Erreur lors de la récupération des sponsors:', error);
+            res.status(500).json({ error: 'Erreur lors de la récupération des sponsors' });
         }
     }
 };

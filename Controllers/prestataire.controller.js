@@ -4,6 +4,7 @@ const { PendingPrestataire, Prestataire } = require('../Models/prestataire.model
 const { PendingUser, User } = require('../Models/user.model');
 const { sendEmail } = require('../configs/sendEmails');
 const {Rating} = require('../Models/prestataire.model');
+const Event = require('../Models/event.model');
 
 
 // Création d'un prestataire en attente
@@ -408,3 +409,32 @@ exports.updatePrestataireSettings = async (req, res) => {
   }
 };
 
+
+// Obtenir les prestataires d'un événement
+exports.getPrestatairesByEventId = async (req, res) => {
+  try {
+    const { id } = req.params;
+    console.log("eventID :", id);
+    // Trouver l'événement par ID et peupler les prestataires
+    const event = await Event.findById(id).populate('prestataires', 'name company').maxTimeMS(5000);
+
+    if (!event) {
+      return res.status(404).json({
+        success: false,
+        error: 'Événement non trouvé'
+      });
+    }
+
+    // Retourner uniquement les prestataires
+    res.status(200).json({
+      success: true,
+      prestataires: event.prestataires
+    });
+  } catch (error) {
+    console.error('Erreur Backend:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Erreur lors de la récupération des prestataires de l\'événement'
+    });
+  }
+};

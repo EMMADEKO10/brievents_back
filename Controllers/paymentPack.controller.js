@@ -4,6 +4,7 @@ const {User} = require("../Models/user.model");
 // const mongoose = require('mongoose');
 // const {createCreditNotification} = require("../notofications/notification.controller")
 const { PaymentPack, PendingPaymentPack } = require("../Models/paymentPack.model");
+const Pack  = require("../Models/pack.model");
 
 dotenv.config();
 
@@ -53,13 +54,11 @@ const addPendingPaymentPack = async (req, res) => {
           transactionId: paymentPack.maxiCashTransactionId
         });
       }
-      
       const pendingPaymentPack = await PendingPaymentPack.findOne({ reference });
       if (!pendingPaymentPack) {
             console.log(`Aucun paymentPack en attente trouvé pour la référence: ${reference}`);
         return res.status(404).json({ error: 'PaymentPack non trouvé' });
       }
-
       // Utiliser findOneAndUpdate avec upsert pour éviter les doublons
       const newPaymentPack = await PaymentPack.findOneAndUpdate(
         { reference: pendingPaymentPack.reference },
@@ -78,11 +77,14 @@ const addPendingPaymentPack = async (req, res) => {
        const user = await User.findById(newPaymentPack.user)  
       console.log(`is à jour:`, user.name);
         const values =  newPaymentPack.amount;
-      console.log(`Nouv mis à jour:`, values);
-        // Créer une notification de crédit à l'utilisateur créé ou mis à jour
-        // Utiliser le nom de l'utilisateur pour la création de la notification
-      const message = `Demande de crédit pour un montant de €${values}`
-        // await createCreditNotification(message, user.name );    
+      console.log(`Nouv mis à jour:`, values);    
+      
+       // Incrémenter le nombre de sponsors dans le pack
+       const pack = await Pack.findById(newPaymentPack.pack);
+       if (pack) {
+         pack.currentSponsors += 1;
+         await pack.save();
+       }
         // Supprimer le paiement en attente seulement après avoir réussi à créer/mettre à jour le paiement
       await PendingPaymentPack.deleteOne({ reference: pendingPaymentPack.reference });
       console.log(`PendingPaymentPack supprimé`);
@@ -101,4 +103,6 @@ const addPendingPaymentPack = async (req, res) => {
     }
 };
 
-module.exports = { addPendingPaymentPack, addPaymentPack };
+
+
+module.exports = { addPendingPaymentPack, addPaymentPack,  };
