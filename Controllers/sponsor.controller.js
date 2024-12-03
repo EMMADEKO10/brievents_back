@@ -213,6 +213,7 @@ exports.getSponsorStats = async (req, res) => {
       totalInvestment: 0,
       activeEvents: 0,
       completedEvents: 0,
+      totalEventsSponsored: 0,
       packDistribution: [
         { _id: 1, count: 0, label: "Bronze", totalValue: 0 },
         { _id: 2, count: 0, label: "Silver", totalValue: 0 },
@@ -256,6 +257,9 @@ exports.getSponsorStats = async (req, res) => {
         }
         stats.monthlyStats[paymentMonth].investment += payment.amount;
         stats.monthlyStats[paymentMonth].count += 1;
+
+        // Incrémenter le nombre total d'événements sponsorisés
+        stats.totalEventsSponsored++;
       }
     });
 
@@ -311,6 +315,7 @@ exports.getSponsorStats = async (req, res) => {
         totalInvestment: Math.round(stats.totalInvestment),
         activeEvents: stats.activeEvents,
         completedEvents: stats.completedEvents,
+        totalEventsSponsored: stats.activeEvents + stats.completedEvents,
         packDistribution: stats.packDistribution.map(pack => ({
           ...pack,
           percentage: totalPacks > 0 ? (pack.count / totalPacks) * 100 : 0
