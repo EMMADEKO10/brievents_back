@@ -5,6 +5,8 @@ const {User} = require("../Models/user.model");
 // const {createCreditNotification} = require("../notofications/notification.controller")
 const { PaymentPack, PendingPaymentPack } = require("../Models/paymentPack.model");
 const Pack  = require("../Models/pack.model");
+const { createSponsorNotification } = require("../notifications/sponsorisation/notification.controller");
+const Event = require("../Models/event.model");
 
 dotenv.config();
 
@@ -84,6 +86,18 @@ const addPendingPaymentPack = async (req, res) => {
        if (pack) {
          pack.currentSponsors += 1;
          await pack.save();
+         
+         // Récupérer l'événement pour obtenir l'organisateur
+         const event = await Event.findById(pack.event);
+         if (event) {
+           // Créer une notification pour l'organisateur
+           await createSponsorNotification(
+             event.createdBy, // L'ID de l'organisateur
+             pack._id,
+             newPaymentPack.user,
+             newPaymentPack.amount
+           );
+         }
        }
         // Supprimer le paiement en attente seulement après avoir réussi à créer/mettre à jour le paiement
       await PendingPaymentPack.deleteOne({ reference: pendingPaymentPack.reference });

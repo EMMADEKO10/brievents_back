@@ -21,7 +21,7 @@ const sendEmail = async (to, subject, text, html) => {
   try {
     const info = await transporter.sendMail({
       // from: '"Sotradons SA" <emmanueldeko64@gmail.com>', // Adresse de l'expéditeur
-      from: '"diasporium SA"', // Adresse de l'expéditeur
+      from: '"Brievent SARL"', // Adresse de l'expéditeur
       to: to, // Liste des destinataires
       subject: subject, // Sujet de l'e-mail
       text: text, // Version texte brut du corps du message

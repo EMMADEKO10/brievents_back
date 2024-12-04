@@ -16,6 +16,7 @@ const parrainageRouter = require("./routes/parrainage.routes")
 const notationRouter = require("./routes/notationPrestataire.routes")
 const packRouter = require("./routes/pack.routes")
 const filterRoutes = require('./routes/filterRoutes');
+const notificationRoutes = require('./notifications/sponsorisation/notification.routes');
 // ---------------------------
 const app = express();
 const server = http.createServer(app);
@@ -41,6 +42,8 @@ app.use('/api/parrainage', parrainageRouter);
 app.use('/api/notation', notationRouter);
 app.use('/api/filters', filterRoutes);
 app.use('/api/pack', packRouter);
+app.use('/api/notifications', notificationRoutes); 
+
 // Route racine
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'views', 'index.html'));
