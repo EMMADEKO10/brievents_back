@@ -391,47 +391,34 @@ exports.getSponsorshipStats = async (req, res) => {
     // Récupérer tous les événements de l'organisateur
     const events = await Event.find({ createdBy: userId });
     
-    // Récupérer tous les packs associés
+    // Récupérer tous les packs avec leurs événements associés
     const packs = await Pack.find({
       event: { $in: events.map(event => event._id) }
-    });
+    }).populate('event', 'name date');
 
-    // Récupérer tous les paiements de packs
+    // Récupérer tous les paiements avec leurs packs associés
     const payments = await PaymentPack.find({
       pack: { $in: packs.map(pack => pack._id) }
-    }).populate('pack');
+    }).populate({
+      path: 'pack',
+      select: 'name maxSponsors currentSponsors price event',
+      populate: {
+        path: 'event',
+        select: 'name date'
+      }
+    }).sort({ createdAt: 1 });
 
-    const stats = {
-      // Statistiques des packs
-      totalPacks: packs.length,
-      availableSpots: packs.reduce((sum, pack) => 
-        sum + (pack.maxSponsors - pack.currentSponsors), 0),
-      
-      // Statistiques des sponsors
-      totalSponsors: payments.length,
-      activeSponsors: payments.filter(payment => 
-        payment.pack.endDate > new Date()
-      ).length,
+    // Générer les statistiques globales et les tendances
+    const { globalStats, trendData } = generateStats(payments, packs);
 
-      // Statistiques financières
-      totalRevenue: payments.reduce((sum, payment) => sum + payment.amount, 0),
-      averageRevenue: payments.length ? 
-        Math.round(payments.reduce((sum, payment) => 
-          sum + payment.amount, 0) / payments.length) : 0,
-
-      // Taux de conversion
-      conversionRate: packs.length ? 
-        Math.round((payments.length / packs.reduce((sum, pack) => 
-          sum + pack.maxSponsors, 0)) * 100) : 0,
-
-      // Top packs
-      topPacks: getTopPacks(packs, payments, 5)
-    };
-
-    res.status(200).json(stats);
+    res.status(200).json({
+      ...globalStats,
+      trendData,
+      success: true
+    });
 
   } catch (error) {
-    console.error('Erreur lors de la récupération des statistiques de sponsoring:', error);
+    console.error('Erreur lors de la récupération des statistiques:', error);
     res.status(500).json({
       success: false,
       message: 'Erreur lors de la récupération des statistiques',
@@ -440,18 +427,92 @@ exports.getSponsorshipStats = async (req, res) => {
   }
 };
 
-const getTopPacks = (packs, payments, limit = 5) => {
+const generateStats = (payments, packs) => {
+  // Statistiques globales
+  const globalStats = {
+    totalPacks: packs.length,
+    availableSpots: packs.reduce((sum, pack) => 
+      sum + (pack.maxSponsors - pack.currentSponsors), 0),
+    totalSponsors: payments.length,
+    totalRevenue: payments.reduce((sum, payment) => sum + payment.amount, 0),
+    averageRevenue: payments.length ? 
+      Math.round(payments.reduce((sum, payment) => 
+        sum + payment.amount, 0) / payments.length) : 0,
+    conversionRate: calculateConversionRate(
+      payments.length,
+      packs.reduce((sum, pack) => sum + pack.maxSponsors, 0)
+    ),
+    topPacks: generateTopPacks(packs, payments)
+  };
+
+  // Données de tendance
+  const trendData = generateMonthlyTrendData(payments);
+
+  return { globalStats, trendData };
+};
+
+const generateMonthlyTrendData = (payments) => {
+  const monthlyData = {};
+  const now = new Date();
+  const twelveMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 11, 1);
+
+  // Initialiser les données pour les 12 derniers mois
+  for (let i = 0; i < 12; i++) {
+    const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const monthKey = date.toLocaleDateString('fr-FR', { 
+      month: 'short', 
+      year: 'numeric' 
+    });
+    
+    monthlyData[monthKey] = {
+      month: monthKey,
+      revenue: 0,
+      sponsors: 0,
+      averagePackValue: 0,
+      packsSold: 0,
+      conversionRate: 0
+    };
+  }
+
+  // Calculer les statistiques mensuelles
+  payments.forEach(payment => {
+    const paymentDate = new Date(payment.createdAt);
+    if (paymentDate >= twelveMonthsAgo) {
+      const monthKey = paymentDate.toLocaleDateString('fr-FR', { 
+        month: 'short', 
+        year: 'numeric' 
+      });
+      
+      if (monthlyData[monthKey]) {
+        monthlyData[monthKey].revenue += payment.amount;
+        monthlyData[monthKey].sponsors += 1;
+        monthlyData[monthKey].packsSold += 1;
+        monthlyData[monthKey].averagePackValue = 
+          monthlyData[monthKey].revenue / monthlyData[monthKey].sponsors;
+      }
+    }
+  });
+
+  return Object.values(monthlyData).reverse();
+};
+
+const generateTopPacks = (packs, payments) => {
   return packs
     .map(pack => ({
       id: pack._id,
       name: pack.name,
+      eventName: pack.event.name,
       maxSponsors: pack.maxSponsors,
       currentSponsors: pack.currentSponsors,
       revenue: payments
-        .filter(payment => payment.pack._id.equals(pack._id))
-        .reduce((sum, payment) => sum + payment.amount, 0)
+        .filter(payment => payment.pack._id.toString() === pack._id.toString())
+        .reduce((sum, payment) => sum + payment.amount, 0),
+      conversionRate: calculateConversionRate(
+        pack.currentSponsors,
+        pack.maxSponsors
+      )
     }))
     .sort((a, b) => b.revenue - a.revenue)
-    .slice(0, limit);
+    .slice(0, 5);
 };
 
