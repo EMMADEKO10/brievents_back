@@ -15,4 +15,7 @@ organizerRouter.get('/settings/:userId', organizerController.getOrganizerSetting
 // Route pour mettre à jour les paramètres
 organizerRouter.put('/settings/:userId', organizerController.updateOrganizerSettings);
 
+// Ajouter cette nouvelle route
+organizerRouter.get('/dashboard/:userId/sponsorship', organizerController.getSponsorshipStats);
+
 module.exports = organizerRouter;

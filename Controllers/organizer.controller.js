@@ -384,3 +384,74 @@ const getTopEvents = (events, payments, limit = 5) => {
     .sort((a, b) => b.revenue - a.revenue)
     .slice(0, limit)
 }
+exports.getSponsorshipStats = async (req, res) => {
+  try {
+    const userId = req.params.userId;
+
+    // Récupérer tous les événements de l'organisateur
+    const events = await Event.find({ createdBy: userId });
+    
+    // Récupérer tous les packs associés
+    const packs = await Pack.find({
+      event: { $in: events.map(event => event._id) }
+    });
+
+    // Récupérer tous les paiements de packs
+    const payments = await PaymentPack.find({
+      pack: { $in: packs.map(pack => pack._id) }
+    }).populate('pack');
+
+    const stats = {
+      // Statistiques des packs
+      totalPacks: packs.length,
+      availableSpots: packs.reduce((sum, pack) => 
+        sum + (pack.maxSponsors - pack.currentSponsors), 0),
+      
+      // Statistiques des sponsors
+      totalSponsors: payments.length,
+      activeSponsors: payments.filter(payment => 
+        payment.pack.endDate > new Date()
+      ).length,
+
+      // Statistiques financières
+      totalRevenue: payments.reduce((sum, payment) => sum + payment.amount, 0),
+      averageRevenue: payments.length ? 
+        Math.round(payments.reduce((sum, payment) => 
+          sum + payment.amount, 0) / payments.length) : 0,
+
+      // Taux de conversion
+      conversionRate: packs.length ? 
+        Math.round((payments.length / packs.reduce((sum, pack) => 
+          sum + pack.maxSponsors, 0)) * 100) : 0,
+
+      // Top packs
+      topPacks: getTopPacks(packs, payments, 5)
+    };
+
+    res.status(200).json(stats);
+
+  } catch (error) {
+    console.error('Erreur lors de la récupération des statistiques de sponsoring:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Erreur lors de la récupération des statistiques',
+      error: error.message
+    });
+  }
+};
+
+const getTopPacks = (packs, payments, limit = 5) => {
+  return packs
+    .map(pack => ({
+      id: pack._id,
+      name: pack.name,
+      maxSponsors: pack.maxSponsors,
+      currentSponsors: pack.currentSponsors,
+      revenue: payments
+        .filter(payment => payment.pack._id.equals(pack._id))
+        .reduce((sum, payment) => sum + payment.amount, 0)
+    }))
+    .sort((a, b) => b.revenue - a.revenue)
+    .slice(0, limit);
+};
+
