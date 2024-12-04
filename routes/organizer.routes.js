@@ -7,7 +7,7 @@ organizerRouter.post('/register', organizerController.createPendingOrganizer);
 // Route pour la confirmation de l'inscription du organizer
 organizerRouter.get('/confirm/:token', organizerController.confirmOrganizer);
 // Route pour la récupération des données du dashboard
-organizerRouter.get('/dashboard/:userId', organizerController.getDashboardData);
+organizerRouter.get('/dashboard/:userId', organizerController.getDashboardStats);
 
 // Route pour récupérer les paramètres
 organizerRouter.get('/settings/:userId', organizerController.getOrganizerSettings);
