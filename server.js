@@ -17,6 +17,8 @@ const notationRouter = require("./routes/notationPrestataire.routes")
 const packRouter = require("./routes/pack.routes")
 const filterRoutes = require('./routes/filterRoutes');
 const notificationRoutes = require('./notifications/sponsorisation/notification.routes');
+const serviceRouter = require('./routes/service.routes');
+
 // ---------------------------
 const app = express();
 const server = http.createServer(app);
@@ -29,10 +31,8 @@ app.use(express.urlencoded({ extended: true }));
 app.use('/public', express.static(path.join(__dirname, 'public')));
 app.use('/images', express.static(path.join(__dirname, 'public', 'images')));
 app.use('/images', express.static(path.join(__dirname, 'public', 'Images')));
-// Ajouter cette ligne après les autres app.use() pour les fichiers statiques
 
 // Routes
-
 app.use('/api/sponsor', sponsorRouter);
 app.use('/api/organizer', organizerRouter);
 app.use('/api/event', eventRouter);
@@ -42,7 +42,8 @@ app.use('/api/parrainage', parrainageRouter);
 app.use('/api/notation', notationRouter);
 app.use('/api/filters', filterRoutes);
 app.use('/api/pack', packRouter);
-app.use('/api/notifications', notificationRoutes); 
+app.use('/api/notifications', notificationRoutes);
+app.use('/api/services', serviceRouter);
 
 // Route racine
 app.get('/', (req, res) => {
