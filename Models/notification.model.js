@@ -8,7 +8,7 @@ const notificationSchema = new mongoose.Schema({
   },
   type: {
     type: String,
-    enum: ['SPONSOR_ADDED'],
+    enum: ['SPONSOR_ADDED','ADDED_TO_EVENT', 'REMOVED_FROM_EVENT'],
     required: true
   },
   message: {
@@ -19,7 +19,7 @@ const notificationSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Pack'
   },
-  sponsor: {
+  sender: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User'
   },

@@ -3,6 +3,7 @@ const { cloudinary, getUploadFolder } = require('../cloudinary');
 const User = require('../Models/user.model');
 const Organizer = require('../Models/organizer.model');
 const { Prestataire } = require('../Models/prestataire.model');
+const { createPrestataireNotification } = require('../notifications/prestataire/notification.controller');
 // ----------------------------------------------------------------------
 exports.getAllEventsClient = async (req, res) => {
   try {
@@ -149,12 +150,10 @@ exports.updateEvent = async (req, res) => {
 // Définition du contrôleur
 exports.addPrestataireToEvent = async (req, res) => {
   try {
-    const { id, prestataireId } = req.params;
-    // console.log('ID événement:', id);
-    // console.log('ID prestataire:', prestataireId);
+    const { id, prestataireId, userId } = req.params;
+   
+    // console.log('ID utilisateur:', userId);
 
-    // Votre logique pour ajouter le prestataire
-    // Par exemple :
     const event = await Event.findById(id);
     if (!event) {
       return res.status(404).json({ message: "Événement non trouvé" });
@@ -164,13 +163,19 @@ exports.addPrestataireToEvent = async (req, res) => {
     if (!prestataire) {
       return res.status(404).json({ message: "Prestataire non trouvé" });
     }
-
     // Ajouter le prestataire s'il n'existe pas déjà
     if (!event.prestataires.includes(prestataireId)) {
       event.prestataires.push(prestataireId);
       await event.save();
-    }
 
+      // Créer une notification
+      await createPrestataireNotification(
+        prestataireId,
+        event._id,
+        userId, 
+        'ADDED_TO_EVENT'
+     );
+    }
     res.status(200).json({ message: "Prestataire ajouté avec succès", event });
   } catch (error) {
     console.error('Erreur dans addPrestataireToEvent:', error);
@@ -181,26 +186,43 @@ exports.addPrestataireToEvent = async (req, res) => {
 // Retirer un prestataire de l'événement
 exports.removePrestataireFromEvent = async (req, res) => {
   try {
-    const { id, prestataireId } = req.params;
+    const { id, prestataireId, userId } = req.params;
+   
+    if (!userId) {
+      return res.status(400).json({ message: "userId est requis" });
+    }
+
     console.log('ID événement:', id);
     console.log('ID prestataire:', prestataireId);
-
+    console.log('ID utilisateur:', userId);
     // Vérifier si l'événement existe
     const event = await Event.findById(id);
     if (!event) {
       return res.status(404).json({ message: 'Événement non trouvé' });
     }
+    // console.log('Événement trouvé:', event);
 
     // Vérifier si le prestataire est bien dans l'événement
     if (!event.prestataires || !event.prestataires.includes(prestataireId)) {
       return res.status(400).json({ message: 'Ce prestataire n\'est pas dans l\'événement' });
     }
+    // console.log('Prestataire bien dans l\'événement:', event.prestataires);
 
     // Retirer le prestataire de l'événement
     event.prestataires = event.prestataires.filter(
       id => id.toString() !== prestataireId
     );
     await event.save();
+    console.log('Prestataire retiré de l\'événement:', event);
+
+    // Créer une notification
+    await createPrestataireNotification(
+      prestataireId,
+      event._id,
+      userId, 
+      'REMOVED_FROM_EVENT'
+    );
+    // console.log('Notification créée pour le prestataire:', prestataireId);
 
     res.status(200).json({
       message: 'Prestataire retiré avec succès de l\'événement',
@@ -208,6 +230,7 @@ exports.removePrestataireFromEvent = async (req, res) => {
     });
 
   } catch (error) {
+    console.error('Erreur lors de la suppression du prestataire de l\'événement:', error);
     res.status(500).json({ message: error.message });
   }
 };
@@ -266,8 +289,6 @@ exports.getEventsByType = async (req, res) => {
     }
   };
 
-  
-  
   // Mettre à jour le statut d'un événement
   exports.updateEventStatus = async (req, res) => {
     try {
@@ -370,8 +391,7 @@ exports.getEventsByType = async (req, res) => {
   // Ajouter cette nouvelle méthode dans event.controller.js
   exports.getAllUserEvents = async (req, res) => {
     try {
-      const userId = req.params.userId;
-      
+      const userId = req.params.userId; 
       // Récupérer tous les événements de l'utilisateur
       const events = await Event.find({ createdBy: userId })
         .populate('createdBy', 'name email')
@@ -412,3 +432,5 @@ exports.getEventsByType = async (req, res) => {
       });
     }
   };
+
+     

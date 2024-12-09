@@ -1,4 +1,4 @@
-const Notification = require('./notification.model');
+const Notification = require('../../Models/notification.model');
 const Pack = require('../../Models/pack.model');
 const {User} = require('../../Models/user.model');
 const { sendEmail } = require('../../configs/sendEmails');
@@ -14,7 +14,7 @@ const createSponsorNotification = async (organizerId, packId, sponsorId, amount)
       type: 'SPONSOR_ADDED',
       message: `Un nouveau sponsor "${sponsor.name}" a contribué ${amount} FCFA pour le pack "${pack.name}" de votre événement "${pack.event.title}"`,
       pack: packId,
-      sponsor: sponsorId
+      sender: sponsorId
     });
     
     await notification.save();
@@ -50,7 +50,7 @@ const getNotifications = async (req, res) => {
     const notifications = await Notification.find({ recipient: req.user._id })
       .sort({ createdAt: -1 })
       .populate('pack', 'name')
-      .populate('sponsor', 'name');
+      .populate('sender', 'name');
     
     res.json(notifications);
   } catch (error) {
@@ -74,7 +74,7 @@ const getOrganizerNotifications = async (req, res) => {
     const notifications = await Notification.find({ recipient: organizerId })
       .sort({ createdAt: -1 })
       .populate('pack', 'name')
-      .populate('sponsor', 'name')
+      .populate('sender', 'name')
     
     res.json(notifications);
   } catch (error) {
