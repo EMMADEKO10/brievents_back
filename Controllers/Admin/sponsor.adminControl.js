@@ -1,5 +1,5 @@
 const { Sponsor, PendingSponsor } = require("../../Models/sponsor.model");
-const User = require("../../Models/user.model");
+const {User, PendingUser} = require("../../Models/user.model");
 
 const updateSponsor = async (req, res) => {
     try {

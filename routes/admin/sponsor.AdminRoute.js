@@ -1,11 +1,12 @@
 const express = require('express');
 const adminSponsorRouter = express.Router();
-const { authenticateToken, isAdmin } = require('../../middleware/authMiddleware');
+// const { authenticateToken, isAdmin } = require('../../middleware/authMiddleware');
 const {
     updateSponsor,
     deleteSponsorById,
     getSponsorByIdAdmin,
-    toggleSponsorStatus
+    getPendingSponsors,
+    validatePendingSponsor
 } = require('../../Controllers/Admin/sponsor.adminControl');
 
 // Route pour obtenir un sponsor spécifique (admin)
@@ -17,7 +18,10 @@ adminSponsorRouter.put('/:id', updateSponsor);
 // Route pour supprimer un sponsor
 adminSponsorRouter.delete('/:id', deleteSponsorById);
 
-// Route pour activer/désactiver un sponsor
-adminSponsorRouter.put('/toggle-status/:id', toggleSponsorStatus);
+// Route pour obtenir la liste des sponsors en attente
+adminSponsorRouter.get('/pending/list', getPendingSponsors);
+
+// Route pour valider un sponsor en attente
+adminSponsorRouter.put('/pending/validate/:id', validatePendingSponsor);
 
 module.exports = adminSponsorRouter;

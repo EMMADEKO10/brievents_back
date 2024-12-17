@@ -1,6 +1,6 @@
 const express = require('express');
 const adminPrestataireRouter = express.Router();
-const { authenticateToken, isAdmin } = require('../../middleware/authMiddleware');
+// const { authenticateToken, isAdmin } = require('../../middleware/authMiddleware');
 const {
     updatePrestataire,
     deletePrestataireById,
