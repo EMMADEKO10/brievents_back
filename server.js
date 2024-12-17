@@ -5,6 +5,7 @@ const cors = require('cors');
 const path = require('path');
 const http = require('http');
 const corsOptions = require("./configs/corsOptions");
+const { initializeSponsorLevels } = require('./scripts/initSponsorLevels');
 
 // Routes
 const sponsorRouter = require('./routes/sponsor.routes');
@@ -71,7 +72,10 @@ app.use((err, req, res, next) => {
 // ---------------------------------------------------------------------------------------------------------
 // Connexion à MongoDB
 mongoose.connect(process.env.MONGODB_URI)
-  .then(() => console.log('Connecté à MongoDB'))
+  .then(async () => {
+    console.log('Connecté à MongoDB');
+    await initializeSponsorLevels();
+  })
   .catch((err) => console.error('Erreur de connexion à MongoDB:', err));
 
 // Démarrage du serveur

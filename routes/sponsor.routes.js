@@ -15,4 +15,8 @@ sponsorRouter.get('/:sponsorId/stats', sponsorController.getSponsorStats);
 sponsorRouter.get('/:sponsorId/profile', sponsorController.getSponsorProfile);
 sponsorRouter.put('/:sponsorId/update', sponsorController.updateSponsorProfile);
 
+// Routes pour le système de récompenses
+sponsorRouter.get('/:sponsorId/points-history', sponsorController.getPointsHistory);
+sponsorRouter.get('/levels', sponsorController.getSponsorLevels);
+
 module.exports = sponsorRouter;

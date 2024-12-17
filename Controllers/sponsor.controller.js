@@ -1,5 +1,5 @@
 const crypto = require('crypto');
-const { PendingSponsor, Sponsor } = require('../Models/sponsor.model');
+const { PendingSponsor, Sponsor, SponsorLevel } = require('../Models/sponsor.model');
 const { PendingUser, User } = require('../Models/user.model');
 const { sendEmail } = require('../configs/sendEmails');
 const { PaymentPack } = require('../Models/paymentPack.model');
@@ -181,19 +181,53 @@ exports.getSponsorPacks = async (req, res) => {
   }
 };
 
+// Fonction utilitaire pour calculer le niveau
+const calculateLevel = async (points) => {
+  const levels = await SponsorLevel.find().sort({ minPoints: 1 });
+  return levels.reduce((current, level) => {
+    if (points >= level.minPoints && (!level.maxPoints || points <= level.maxPoints)) {
+      return level;
+    }
+    return current;
+  }, levels[0]);
+};
+
+// Fonction utilitaire pour calculer la progression
+const calculateProgression = async (currentPoints, currentLevel) => {
+  const nextLevel = await SponsorLevel.findOne({
+    minPoints: { $gt: currentPoints },
+    isInviteOnly: false
+  }).sort({ minPoints: 1 });
+
+  if (!nextLevel) {
+    return {
+      nextLevel: null,
+      pointsToNextLevel: 0,
+      progressPercentage: 100,
+      currentPoints
+    };
+  }
+
+  const pointsToNextLevel = nextLevel.minPoints - currentPoints;
+  const progressPercentage = ((currentPoints - currentLevel.minPoints) / 
+    (nextLevel.minPoints - currentLevel.minPoints)) * 100;
+
+  return {
+    nextLevel: nextLevel.name,
+    pointsToNextLevel,
+    progressPercentage: Math.min(Math.max(progressPercentage, 0), 100),
+    currentPoints
+  };
+};
+
+// Mise à jour de getSponsorStats pour inclure les récompenses
 exports.getSponsorStats = async (req, res) => {
   const { sponsorId } = req.params;
 
   try {
-    // Récupérer le sponsor
-    const sponsor = await Sponsor.findOne({ user: sponsorId });
-    if (!sponsor) {
-      return res.status(404).json({
-        success: false,
-        message: 'Sponsor non trouvé'
-      });
-    }
-
+    const sponsor = await Sponsor.findOne({ user: sponsorId })
+      .populate('currentLevel');
+    
     // Récupérer tous les packs payés par le sponsor avec leurs détails
     const paymentPacks = await PaymentPack.find({ user: sponsorId })
       .populate({
@@ -310,6 +344,22 @@ exports.getSponsorStats = async (req, res) => {
     // Dans la préparation de la réponse
     const growthData = calculateMonthlyGrowth(paymentPacks);
 
+    // Calcul des points
+    const investmentPoints = Math.floor(stats.totalInvestment);
+    const projectPoints = stats.totalEventsSponsored * 100;
+    const totalPoints = investmentPoints + projectPoints;
+
+    // Mise à jour des points du sponsor si nécessaire
+    if (sponsor.totalPoints !== totalPoints) {
+      sponsor.totalPoints = totalPoints;
+      await sponsor.save();
+    }
+
+    // Détermination du niveau actuel
+    const currentLevel = await calculateLevel(totalPoints);
+    const progression = await calculateProgression(totalPoints, currentLevel);
+
+    // Ajout des informations de récompense à la réponse
     const response = {
       stats: {
         totalInvestment: Math.round(stats.totalInvestment),
@@ -332,6 +382,13 @@ exports.getSponsorStats = async (req, res) => {
         monthlyData: {
           current: growthData.currentMonthTotal,
           previous: growthData.lastMonthTotal
+        },
+        totalPoints,
+        currentLevel,
+        progression,
+        breakdown: {
+          investmentPoints,
+          projectPoints
         }
       }
     };
@@ -347,6 +404,40 @@ exports.getSponsorStats = async (req, res) => {
       success: false,
       message: 'Erreur lors de la récupération des statistiques',
       error: error.message
+    });
+  }
+};
+
+// Nouvelle route pour obtenir l'historique des points
+exports.getPointsHistory = async (req, res) => {
+  const { sponsorId } = req.params;
+  
+  try {
+    const sponsor = await Sponsor.findOne({ user: sponsorId });
+    res.status(200).json({
+      success: true,
+      data: sponsor.pointsHistory
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Erreur lors de la récupération de l\'historique des points'
+    });
+  }
+};
+
+// Nouvelle route pour obtenir tous les niveaux de sponsor
+exports.getSponsorLevels = async (req, res) => {
+  try {
+    const levels = await SponsorLevel.find();
+    res.status(200).json({
+      success: true,
+      data: levels
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Erreur lors de la récupération des niveaux'
     });
   }
 };
