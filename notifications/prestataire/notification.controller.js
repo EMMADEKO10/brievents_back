@@ -27,7 +27,6 @@ exports.createPrestataireNotification = async (prestataireId, eventId, organizer
       default:
         throw new Error('Type de notification invalide');
     }
-
     const notification = new Notification({
       recipient: prestataire.user,
       event: eventId,
@@ -35,9 +34,7 @@ exports.createPrestataireNotification = async (prestataireId, eventId, organizer
       type: type,
       message: message
     });
-
     await notification.save();
-
      // Envoi de l'email au prestataire
      await sendEmail(
       user.email,
@@ -56,8 +53,7 @@ exports.createPrestataireNotification = async (prestataireId, eventId, organizer
           </div>
         </div>
       `
-    );
-    
+    ); 
     return notification;
   } catch (error) {
     console.error('Erreur lors de la création de la notification:', error);

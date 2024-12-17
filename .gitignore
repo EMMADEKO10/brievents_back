@@ -1,4 +1,5 @@
 node_modules
+/Controllers/Essaie
 logs
 .env
 # images

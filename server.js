@@ -18,6 +18,12 @@ const packRouter = require("./routes/pack.routes")
 const filterRoutes = require('./routes/filterRoutes');
 const notificationRoutes = require('./notifications/sponsorisation/notification.routes');
 const serviceRouter = require('./routes/service.routes');
+const adminEventRouter = require('./routes/admin/event.AdminRoute');
+// Admin Routes
+const adminOrganizerRouter = require('./routes/admin/organizer.AdminRoute');
+const adminPrestataireRouter = require('./routes/admin/prestataire.AdminRoute');
+const adminSponsorRouter = require('./routes/admin/sponsor.AdminRoute');
+const adminUserRouter = require('./routes/admin/user.AdminRoute');
 
 // ---------------------------
 const app = express();
