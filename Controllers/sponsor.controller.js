@@ -184,40 +184,16 @@ exports.getSponsorPacks = async (req, res) => {
 // Fonction utilitaire pour calculer le niveau
 const calculateLevel = async (points) => {
   const levels = await SponsorLevel.find().sort({ minPoints: 1 });
-  
-  // Si aucun niveau n'est trouvé, retourner le niveau par défaut
-  if (!levels || levels.length === 0) {
-    return {
-      name: 'EMERGENT',
-      minPoints: 0,
-      maxPoints: 1000,
-      benefits: [
-        'Mention spéciale sur la plateforme',
-        'Accès aux premières opportunités de partenariat'
-      ]
-    };
-  }
-
-  // Utiliser reduce avec une valeur initiale (premier niveau)
   return levels.reduce((current, level) => {
     if (points >= level.minPoints && (!level.maxPoints || points <= level.maxPoints)) {
       return level;
     }
     return current;
-  }, levels[0]); // Utiliser le premier niveau comme valeur initiale
+  }, levels[0]);
 };
 
 // Fonction utilitaire pour calculer la progression
 const calculateProgression = async (currentPoints, currentLevel) => {
-  if (!currentLevel) {
-    return {
-      nextLevel: 'SILVER',
-      pointsToNextLevel: 1000,
-      progressPercentage: 0,
-      currentPoints: currentPoints || 0
-    };
-  }
-
   const nextLevel = await SponsorLevel.findOne({
     minPoints: { $gt: currentPoints },
     isInviteOnly: false
@@ -370,7 +346,7 @@ exports.getSponsorStats = async (req, res) => {
 
     // Calcul des points
     const investmentPoints = Math.floor(stats.totalInvestment);
-    const projectPoints = stats.totalEventsSponsored * 250;
+    const projectPoints = stats.totalEventsSponsored * 100;
     const totalPoints = investmentPoints + projectPoints;
 
     // Mise à jour des points du sponsor si nécessaire
