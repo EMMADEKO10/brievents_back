@@ -1,6 +1,6 @@
 const express = require('express');
 const adminSponsorRouter = express.Router();
-const { authenticateToken, isAdmin } = require('../../middleware/authMiddleware');
+// const { authenticateToken, isAdmin } = require('../../middleware/authMiddleware');
 const {
     updateSponsor,
     deleteSponsorById,
