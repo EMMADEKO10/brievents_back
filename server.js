@@ -51,6 +51,11 @@ app.use('/api/filters', filterRoutes);
 app.use('/api/pack', packRouter);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/services', serviceRouter);
+// Admin Routes
+app.use('/api/admin/event', adminEventRouter);
+app.use('/api/admin/organizer', adminOrganizerRouter);
+app.use('/api/admin/prestataire', adminPrestataireRouter);
+app.use('/api/admin/sponsor', adminSponsorRouter);
 
 // Route racine
 app.get('/', (req, res) => {
