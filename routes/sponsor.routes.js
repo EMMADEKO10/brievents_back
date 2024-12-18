@@ -1,6 +1,7 @@
 const express = require('express');
 const sponsorRouter = express.Router();
 const sponsorController = require('../Controllers/sponsor.controller');
+const rewardController = require('../Controllers/reward.controller');
 
 // Route pour la création d'un sponsor en attente
 sponsorRouter.post('/register', sponsorController.createPendingSponsor);
@@ -14,9 +15,5 @@ sponsorRouter.get('/:sponsorId/stats', sponsorController.getSponsorStats);
 // Routes pour la gestion du profil
 sponsorRouter.get('/:sponsorId/profile', sponsorController.getSponsorProfile);
 sponsorRouter.put('/:sponsorId/update', sponsorController.updateSponsorProfile);
-
-// Routes pour le système de récompenses
-sponsorRouter.get('/:sponsorId/points-history', sponsorController.getPointsHistory);
-sponsorRouter.get('/levels', sponsorController.getSponsorLevels);
 
 module.exports = sponsorRouter;

@@ -6,7 +6,8 @@
   "license": "MIT",
   "scripts": {
     "start": "node server.js",
-    "dev": "nodemon sever.js"
+    "dev": "nodemon sever.js",
+    "seed:rewards": "node seeds/rewardLevels.seed.js"
   },
   "repository": {
     "type": "git",

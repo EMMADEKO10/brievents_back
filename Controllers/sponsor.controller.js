@@ -5,6 +5,7 @@ const { sendEmail } = require('../configs/sendEmails');
 const { PaymentPack } = require('../Models/paymentPack.model');
 const Pack = require('../Models/pack.model');
 const mongoose = require('mongoose');
+const RewardLevel = require('../Models/rewardLevel.model');
 
 // Création d’un sponsor en attente
 exports.createPendingSponsor = async (req, res) => {
@@ -225,9 +226,15 @@ exports.getSponsorStats = async (req, res) => {
   const { sponsorId } = req.params;
 
   try {
-    const sponsor = await Sponsor.findOne({ user: sponsorId })
-      .populate('currentLevel');
-    
+    // Récupérer le sponsor
+    const sponsor = await Sponsor.findOne({ user: sponsorId });
+    if (!sponsor) {
+      return res.status(404).json({
+        success: false,
+        message: 'Sponsor non trouvé'
+      });
+    }
+
     // Récupérer tous les packs payés par le sponsor avec leurs détails
     const paymentPacks = await PaymentPack.find({ user: sponsorId })
       .populate({
@@ -366,6 +373,14 @@ exports.getSponsorStats = async (req, res) => {
         activeEvents: stats.activeEvents,
         completedEvents: stats.completedEvents,
         totalEventsSponsored: stats.activeEvents + stats.completedEvents,
+        totalPoints: sponsor.totalPoints || 0,
+        currentLevel: sponsor.currentLevel ? {
+          name: sponsor.currentLevel.name,
+          benefits: sponsor.currentLevel.benefits
+        } : {
+          name: 'EMERGENT',
+          benefits: ['Accès aux événements de base']
+        },
         packDistribution: stats.packDistribution.map(pack => ({
           ...pack,
           percentage: totalPacks > 0 ? (pack.count / totalPacks) * 100 : 0
@@ -393,10 +408,24 @@ exports.getSponsorStats = async (req, res) => {
       }
     };
 
-    res.status(200).json({
-      success: true,
-      ...response
-    });
+    // Ajout des données de progression si un niveau suivant existe
+    if (sponsor.currentLevel) {
+      const nextLevel = await RewardLevel.findOne({
+        minPoints: { $gt: sponsor.totalPoints }
+      }).sort({ minPoints: 1 });
+
+      if (nextLevel) {
+        response.stats.progression = {
+          currentPoints: sponsor.totalPoints,
+          nextLevel: nextLevel.name,
+          progressPercentage: ((sponsor.totalPoints - sponsor.currentLevel.minPoints) / 
+            (nextLevel.minPoints - sponsor.currentLevel.minPoints)) * 100,
+          pointsToNextLevel: nextLevel.minPoints - sponsor.totalPoints
+        };
+      }
+    }
+
+    res.status(200).json(response);
 
   } catch (error) {
     console.error('Erreur lors de la récupération des statistiques:', error);

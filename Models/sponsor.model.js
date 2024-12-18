@@ -29,14 +29,6 @@ const SponsorSchema = new mongoose.Schema({
   company: { type: String, required: true },
   language: { type: String, required: true },
   phone: { type: String },
-  totalPoints: { type: Number, default: 0 },
-  currentLevel: { type: mongoose.Schema.Types.ObjectId, ref: 'SponsorLevel' },
-  pointsHistory: [{
-    points: Number,
-    source: { type: String, enum: ['INVESTMENT', 'PROJECT'] },
-    date: { type: Date, default: Date.now },
-    details: String
-  }]
 }, { timestamps: true });
 
 const PendingSponsor = mongoose.model('PendingSponsor', PendingSponsorSchema);
