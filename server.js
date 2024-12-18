@@ -6,6 +6,7 @@ const path = require('path');
 const http = require('http');
 const corsOptions = require("./configs/corsOptions");
 const { initializeSponsorLevels } = require('./scripts/initSponsorLevels');
+const { initializeAdmin } = require('./scripts/initAdmin');
 
 // Routes
 const sponsorRouter = require('./routes/sponsor.routes');
@@ -56,6 +57,7 @@ app.use('/api/admin/event', adminEventRouter);
 app.use('/api/admin/organizer', adminOrganizerRouter);
 app.use('/api/admin/prestataire', adminPrestataireRouter);
 app.use('/api/admin/sponsor', adminSponsorRouter);
+app.use('/api/admin/user', adminUserRouter);
 
 // Route racine
 app.get('/', (req, res) => {
@@ -80,6 +82,7 @@ mongoose.connect(process.env.MONGODB_URI)
   .then(async () => {
     console.log('Connecté à MongoDB');
     await initializeSponsorLevels();
+    await initializeAdmin();
   })
   .catch((err) => console.error('Erreur de connexion à MongoDB:', err));
 

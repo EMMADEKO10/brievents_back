@@ -1,27 +1,25 @@
 const express = require('express');
 const adminUserRouter = express.Router();
-// const { authenticateToken, isAdmin } = require('../../middleware/authMiddleware');
+const { authenticateToken, isAdmin } = require('../../middleware/authMiddleware');
 const {
     updateUser,
     deleteUserById,
     getUserByIdAdmin,
     getPendingUsers,
-    changeUserRole
+    changeUserRole,
+    loginAdmin
 } = require('../../Controllers/Admin/user.adminControl');
 
-// Route pour obtenir un utilisateur spécifique (admin)
+// Route de connexion admin (pas besoin d'authentification pour cette route)
+adminUserRouter.post('/login', loginAdmin);
+
+// Routes protégées
+adminUserRouter.use(authenticateToken, isAdmin);
+
 adminUserRouter.get('/:id', getUserByIdAdmin);
-
-// Route pour mettre à jour un utilisateur
 adminUserRouter.put('/:id', updateUser);
-
-// Route pour supprimer un utilisateur
 adminUserRouter.delete('/:id', deleteUserById);
-
-// Route pour obtenir la liste des utilisateurs en attente
 adminUserRouter.get('/pending/list', getPendingUsers);
-
-// Route pour changer le rôle d'un utilisateur
 adminUserRouter.put('/role/:id', changeUserRole);
 
 module.exports = adminUserRouter;

@@ -1,5 +1,6 @@
 const { User, PendingUser } = require("../../Models/user.model");
 const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
 
 const updateUser = async (req, res) => {
     try {
@@ -121,10 +122,44 @@ const changeUserRole = async (req, res) => {
     }
 };
 
+const loginAdmin = async (req, res) => {
+    try {
+        const { email, password } = req.body;
+
+        const admin = await User.findOne({ email, role: 'admin' });
+        if (!admin) {
+            return res.status(401).json({ error: "Email ou mot de passe incorrect" });
+        }
+
+        const isValidPassword = await bcrypt.compare(password, admin.password);
+        if (!isValidPassword) {
+            return res.status(401).json({ error: "Email ou mot de passe incorrect" });
+        }
+
+        const token = jwt.sign(
+            { userId: admin._id },
+            process.env.JWT_SECRET,
+            { expiresIn: process.env.JWT_EXPIRES_IN }
+        );
+
+        const userWithoutPassword = admin.toObject();
+        delete userWithoutPassword.password;
+
+        res.status(200).json({
+            token,
+            user: userWithoutPassword
+        });
+    } catch (error) {
+        console.error('Erreur lors de la connexion:', error);
+        res.status(500).json({ error: "Erreur interne du serveur" });
+    }
+};
+
 module.exports = {
     updateUser,
     deleteUserById,
     getUserByIdAdmin,
     getPendingUsers,
-    changeUserRole
+    changeUserRole,
+    loginAdmin
 };
