@@ -11,7 +11,7 @@ const {
     updatePaymentPackStatus
 } = require('../../Controllers/Admin/reward.adminControl');
 
-// Appliquer l'authentification et la vérification admin
+// Middleware d'authentification
 adminRewardRouter.use(authenticateToken, isAdmin);
 
 // Routes pour les niveaux de récompense
@@ -20,12 +20,9 @@ adminRewardRouter.post('/levels', createRewardLevel);
 adminRewardRouter.put('/levels/:id', updateRewardLevel);
 adminRewardRouter.delete('/levels/:id', deleteRewardLevel);
 
-// Routes pour les statistiques et la gestion des paiements
-adminRewardRouter.get('/payments/stats', getPaymentPacksStats);
+// Routes pour les paiements
 adminRewardRouter.get('/payments', getPaymentPacksList);
+adminRewardRouter.get('/payments/stats', getPaymentPacksStats);
 adminRewardRouter.patch('/payments/:id/status', updatePaymentPackStatus);
-
-// Route pour obtenir les statistiques détaillées
-adminRewardRouter.get('/payments/stats/detailed', getPaymentPacksStats);
 
 module.exports = adminRewardRouter; 
