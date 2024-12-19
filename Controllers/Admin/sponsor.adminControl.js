@@ -1,5 +1,79 @@
-const { Sponsor, PendingSponsor } = require("../../Models/sponsor.model");
-const {User, PendingUser} = require("../../Models/user.model");
+const { Sponsor, PendingSponsor, SponsorLevel } = require("../../Models/sponsor.model");
+const { User } = require("../../Models/user.model");
+const { PaymentPack } = require("../../Models/paymentPack.model");
+const bcrypt = require('bcrypt');
+
+// Obtenir tous les sponsors avec pagination et filtres
+const getAllSponsors = async (req, res) => {
+    try {
+        const { 
+            page = 1, 
+            limit = 10, 
+            search, 
+            sortBy = 'createdAt', 
+            order = 'desc',
+            level 
+        } = req.query;
+
+        const query = {};
+
+        if (search) {
+            query.$or = [
+                { company: { $regex: search, $options: 'i' } },
+                { 'user.name': { $regex: search, $options: 'i' } },
+                { 'user.email': { $regex: search, $options: 'i' } }
+            ];
+        }
+
+        if (level) query.currentLevel = level;
+
+        const sponsors = await Sponsor.find(query)
+            .populate('user', 'email name')
+            .sort({ [sortBy]: order === 'desc' ? -1 : 1 })
+            .limit(limit * 1)
+            .skip((page - 1) * limit);
+
+        const total = await Sponsor.countDocuments(query);
+
+        res.status(200).json({
+            sponsors,
+            totalPages: Math.ceil(total / limit),
+            currentPage: page,
+            total
+        });
+    } catch (error) {
+        console.error("Erreur lors de la récupération des sponsors:", error);
+        res.status(500).json({ error: "Erreur interne du serveur" });
+    }
+};
+
+const getSponsorStats = async (req, res) => {
+    try {
+        const sponsorId = req.params.id;
+        
+        // Récupérer l'historique des paiements
+        const paymentHistory = await PaymentPack.find({ 
+            user: sponsorId,
+            status: 'completed'
+        })
+        .populate('pack')
+        .sort({ createdAt: -1 });
+
+        // Calculer les statistiques
+        const stats = {
+            totalInvested: paymentHistory.reduce((sum, p) => sum + p.amount, 0),
+            totalEvents: paymentHistory.length,
+            averageInvestment: paymentHistory.length > 0 ? 
+                paymentHistory.reduce((sum, p) => sum + p.amount, 0) / paymentHistory.length : 0,
+            recentPayments: paymentHistory.slice(0, 5)
+        };
+
+        res.status(200).json(stats);
+    } catch (error) {
+        console.error("Erreur lors de la récupération des statistiques:", error);
+        res.status(500).json({ error: "Erreur interne du serveur" });
+    }
+};
 
 const updateSponsor = async (req, res) => {
     try {
@@ -106,9 +180,11 @@ const validatePendingSponsor = async (req, res) => {
 };
 
 module.exports = {
+    getAllSponsors,
     updateSponsor,
     deleteSponsorById,
     getSponsorByIdAdmin,
     getPendingSponsors,
-    validatePendingSponsor
+    validatePendingSponsor,
+    getSponsorStats
 };
