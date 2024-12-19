@@ -7,6 +7,7 @@ const http = require('http');
 const corsOptions = require("./configs/corsOptions");
 const { initializeSponsorLevels } = require('./scripts/initSponsorLevels');
 const { initializeAdmin } = require('./scripts/initAdmin');
+const { initializeRewardLevels } = require('./scripts/initRewardLevels');
 
 // Routes
 const sponsorRouter = require('./routes/sponsor.routes');
@@ -26,6 +27,7 @@ const adminOrganizerRouter = require('./routes/admin/organizer.AdminRoute');
 const adminPrestataireRouter = require('./routes/admin/prestataire.AdminRoute');
 const adminSponsorRouter = require('./routes/admin/sponsor.AdminRoute');
 const adminUserRouter = require('./routes/admin/user.AdminRoute');
+const adminRewardRouter = require('./routes/admin/reward.AdminRoute');
 
 // ---------------------------
 const app = express();
@@ -58,6 +60,7 @@ app.use('/api/admin/organizer', adminOrganizerRouter);
 app.use('/api/admin/prestataire', adminPrestataireRouter);
 app.use('/api/admin/sponsor', adminSponsorRouter);
 app.use('/api/admin/user', adminUserRouter);
+app.use('/api/admin/reward', adminRewardRouter);
 
 // Route racine
 app.get('/', (req, res) => {
@@ -83,6 +86,7 @@ mongoose.connect(process.env.MONGODB_URI)
     console.log('Connecté à MongoDB');
     await initializeSponsorLevels();
     await initializeAdmin();
+    await initializeRewardLevels();
   })
   .catch((err) => console.error('Erreur de connexion à MongoDB:', err));
 
